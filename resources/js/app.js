@@ -166,6 +166,8 @@ createInertiaApp({
       import.meta.glob("./views/**/*.vue")
     );
 
+
+
     // Standard-Layout festlegen
     page.then((module) => {
       if (module.default.layout === undefined) {

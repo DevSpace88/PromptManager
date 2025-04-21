@@ -61,13 +61,16 @@ class PromptController extends Controller
             abort(403);
         }
 
-        $prompt->load(['versions' => function ($query) {
-            $query->orderBy('version', 'desc');
-        }]);
+        $prompt->load([
+            'versions' => function ($query) {
+                $query->orderBy('version', 'desc');
+            },
+            'currentVersion' // currentVersion-Beziehung laden
+        ]);
 
         return Inertia::render('Pages/Prompts/Show', [
             'prompt' => $prompt,
-            'currentVersion' => $prompt->currentVersion(),
+            'currentVersion' => $prompt->currentVersion, // Direkt auf die geladene Beziehung zugreifen
         ]);
     }
 
@@ -77,11 +80,11 @@ class PromptController extends Controller
             abort(403);
         }
 
-        $prompt->load('currentVersion');
+        $prompt->load('currentVersion')->first();
 
         return Inertia::render('Pages/Prompts/Edit', [
             'prompt' => $prompt,
-            'currentVersion' => $prompt->currentVersion(),
+            'currentVersion' => $prompt->currentVersion,
         ]);
     }
 
@@ -104,10 +107,11 @@ class PromptController extends Controller
             'tags' => $request->tags,
         ]);
 
-        $currentVersion = $prompt->currentVersion();
+        $currentVersion = $prompt->currentVersion()->first();
 
         // Only create a new version if content has changed
-        if ($currentVersion->content !== $request->content) {
+        if ($currentVersion && $currentVersion->content !== $request->content) {
+
             // Mark old version as not current
             $currentVersion->update(['is_current' => false]);
 
