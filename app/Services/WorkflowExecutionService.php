@@ -5,14 +5,15 @@ namespace App\Services;
 use App\Models\ExecutionLog;
 use App\Models\Workflow;
 use App\Models\Prompt;
-use App\Services\AiService;
+use App\Services\AIService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class WorkflowExecutionService
 {
     protected $aiService;
 
-    public function __construct(AiService $aiService)
+    public function __construct(AIService $aiService)
     {
         $this->aiService = $aiService;
     }
