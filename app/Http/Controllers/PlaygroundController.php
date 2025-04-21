@@ -24,7 +24,7 @@ class PlaygroundController extends Controller
             ->orderBy('title')
             ->get();
 
-        return Inertia::render('Playground/Index', [
+        return Inertia::render('Pages/Playground/Index', [
             'prompts' => $prompts,
         ]);
     }
@@ -37,7 +37,7 @@ class PlaygroundController extends Controller
 
         $prompt->load('currentVersion');
 
-        return Inertia::render('Playground/Show', [
+        return Inertia::render('Pages/Playground/Show', [
             'prompt' => $prompt,
             'currentVersion' => $prompt->currentVersion(),
         ]);

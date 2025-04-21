@@ -1,4 +1,3 @@
-// resources/js/Pages/Workflows/Create.vue
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';

@@ -25,14 +25,14 @@ class WorkflowController extends Controller
             ->orderBy('updated_at', 'desc')
             ->get();
 
-        return Inertia::render('Workflows/Index', [
+        return Inertia::render('Pages/Workflows/Index', [
             'workflows' => $workflows
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('Workflows/Create');
+        return Inertia::render('Pages/Workflows/Create');
     }
 
     public function store(Request $request)
@@ -70,7 +70,7 @@ class WorkflowController extends Controller
             ->take(5)
             ->get();
 
-        return Inertia::render('Workflows/Show', [
+        return Inertia::render('Pages/Workflows/Show', [
             'workflow' => $workflow,
             'recentExecutions' => $recentExecutions,
         ]);
@@ -82,7 +82,7 @@ class WorkflowController extends Controller
             abort(403);
         }
 
-        return Inertia::render('Workflows/Edit', [
+        return Inertia::render('Pages/Workflows/Edit', [
             'workflow' => $workflow,
         ]);
     }

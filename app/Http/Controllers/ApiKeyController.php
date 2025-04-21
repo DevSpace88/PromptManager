@@ -21,7 +21,7 @@ class ApiKeyController extends Controller
             return $apiKey;
         });
 
-        return Inertia::render('ApiKeys/Index', [
+        return Inertia::render('Pages/ApiKeys/Index', [
             'apiKeys' => $apiKeys
         ]);
     }

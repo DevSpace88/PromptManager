@@ -17,14 +17,14 @@ class PromptController extends Controller
             ->orderBy('updated_at', 'desc')
             ->get();
 
-        return Inertia::render('Prompts/Index', [
+        return Inertia::render('Pages/Prompts/Index', [
             'prompts' => $prompts
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('Prompts/Create');
+        return Inertia::render('Pages/Prompts/Create');
     }
 
     public function store(Request $request)
@@ -65,7 +65,7 @@ class PromptController extends Controller
             $query->orderBy('version', 'desc');
         }]);
 
-        return Inertia::render('Prompts/Show', [
+        return Inertia::render('Pages/Prompts/Show', [
             'prompt' => $prompt,
             'currentVersion' => $prompt->currentVersion(),
         ]);
@@ -79,7 +79,7 @@ class PromptController extends Controller
 
         $prompt->load('currentVersion');
 
-        return Inertia::render('Prompts/Edit', [
+        return Inertia::render('Pages/Prompts/Edit', [
             'prompt' => $prompt,
             'currentVersion' => $prompt->currentVersion(),
         ]);

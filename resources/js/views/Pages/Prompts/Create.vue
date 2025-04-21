@@ -1,346 +1,256 @@
-// resources/js/views/Pages/Workflows/Create.vue
+// resources/js/Pages/Prompts/Create.vue
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, watch } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
-import { VueFlow, useVueFlow } from '@vue-flow/core';
-import { Background } from '@vue-flow/background';
-import { Controls } from '@vue-flow/controls';
-import { MiniMap } from '@vue-flow/minimap';
+// Pfade korrigieren basierend auf dem, was in anderen Dateien verwendet wird
+// Beachte: layouts ist kleingeschrieben in anderen Dateien
+import MonacoEditor from '@/Components/MonacoEditor.vue';
+// BaseLayout entfernen, da es nicht verwendet wird
+// import BasePageHeading aus den Imports entfernen, da es möglicherweise Probleme verursacht
 
-import '@vue-flow/core/dist/style.css';
-import { v4 as uuidv4 } from 'uuid';
-import '@vue-flow/core/dist/style.css';
-import '@vue-flow/core/dist/theme-default.css';
-
-// Import custom node types
-import PromptNode from '@/views/Pages/Workflows/Nodes/PromptNode.vue';
-import ConditionNode from '@/views/Pages/Workflows/Nodes/ConditionNode.vue';
-import InputNode from '@/views/Pages/Workflows/Nodes/InputNode.vue';
-import OutputNode from '@/views/Pages/Workflows/Nodes/OutputNode.vue';
-import ApiNode from '@/views/Pages/Workflows/Nodes/ApiNode.vue';
-import TransformNode from '@/views/Pages/Workflows/Nodes/TransformNode.vue';
-
-// Props
-const props = defineProps({
-  prompts: {
-    type: Array,
-    default: () => []
-  },
-  apiKeys: {
-    type: Array,
-    default: () => []
-  }
-});
-
-// Form for workflow details
+// Initialize form with empty values
 const form = useForm({
-  name: '',
+  title: '',
   description: '',
-  nodes: [],
-  edges: [],
-  settings: {
-    autoSave: true,
-    notifyOnCompletion: true
+  content: '',
+  tags: [],
+});
+
+// For handling tag inputs
+const newTag = ref('');
+const extractedVariables = ref([]);
+
+// Extract variables from prompt content
+const extractVariables = (content) => {
+  if (!content) {
+    extractedVariables.value = [];
+    return;
   }
-});
 
-// Node types registration
-const nodeTypes = {
-  promptNode: PromptNode,
-  conditionNode: ConditionNode,
-  inputNode: InputNode,
-  outputNode: OutputNode,
-  apiNode: ApiNode,
-  transformNode: TransformNode
+  const regex = /\{\{(.*?)\}\}/g;
+  const matches = [...content.matchAll(regex)];
+  extractedVariables.value = [...new Set(matches.map(match => match[1].trim()))];
 };
 
-// Vue Flow instance
-const {
-  nodes,
-  edges,
-  addNodes,
-  addEdges,
-  onConnect,
-  onNodesChange,
-  onEdgesChange
-} = useVueFlow();
+// Watch for changes in content to extract variables
+watch(() => form.content, (newContent) => {
+  extractVariables(newContent);
+});
 
-// Sidebar state
-const activePanel = ref('nodes');
-
-// Create a new node
-const createNode = (type, data = {}) => {
-  const id = `node-${uuidv4()}`;
-  const nodeData = {
-    id,
-    type: `${type}Node`,
-    position: { x: 250, y: 100 },
-    data: {
-      ...data,
-      label: data.label || `${type.charAt(0).toUpperCase() + type.slice(1)}`,
-      type: type
+// Add new tag
+const addTag = () => {
+  if (newTag.value.trim()) {
+    if (!form.tags.includes(newTag.value.trim())) {
+      form.tags.push(newTag.value.trim());
     }
-  };
-
-  addNodes([nodeData]);
-  return nodeData;
+    newTag.value = '';
+  }
 };
 
-// Add different types of nodes
-const addPromptNode = () => {
-  createNode('prompt', {
-    label: 'Prompt',
-    content: '',
-    prompt_id: null,
-    provider: 'openai',
-    model: 'gpt-4',
-    temperature: 0.7,
-    max_tokens: 2000,
-    output_variable: 'result'
-  });
+// Handle Enter key in tag input
+const handleTagKeydown = (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    addTag();
+  }
 };
 
-const addConditionNode = () => {
-  createNode('condition', {
-    label: 'Condition',
-    condition: '',
-    true_path: null,
-    false_path: null
-  });
+// Remove a tag
+const removeTag = (index) => {
+  form.tags.splice(index, 1);
 };
 
-const addInputNode = () => {
-  createNode('input', {
-    label: 'Input',
-    variable: '',
-    default_value: ''
+// Submit the form
+const submit = () => {
+  form.post(route('prompts.store'), {
+    onSuccess: () => {
+      // Reset form after successful submission
+      form.reset();
+      extractedVariables.value = [];
+    },
   });
 };
-
-const addOutputNode = () => {
-  createNode('output', {
-    label: 'Output',
-    variables: []
-  });
-};
-
-const addApiNode = () => {
-  createNode('api', {
-    label: 'API Call',
-    url: '',
-    method: 'GET',
-    headers: {},
-    body: {},
-    output_variable: 'api_result'
-  });
-};
-
-const addTransformNode = () => {
-  createNode('transform', {
-    label: 'Transform',
-    input_variable: '',
-    output_variable: '',
-    transformation: 'json_parse',
-    regex: '',
-    code: ''
-  });
-};
-
-// Handle connection between nodes
-onConnect((params) => {
-  addEdges([{
-    id: `edge-${uuidv4()}`,
-    source: params.source,
-    target: params.target,
-    animated: true
-  }]);
-});
-
-// Track changes to nodes and edges
-onNodesChange((changes) => {
-  // Update form data when nodes change
-  form.nodes = nodes.value.map(node => ({
-    id: node.id,
-    type: node.data.type,
-    position: node.position,
-    data: node.data
-  }));
-});
-
-onEdgesChange((changes) => {
-  // Update form data when edges change
-  form.edges = edges.value;
-});
-
-// Set default nodes for new workflow
-onMounted(() => {
-  // Add initial nodes (Input and Output)
-  const inputNode = createNode('input', {
-    label: 'Input',
-    variable: 'input',
-    default_value: ''
-  });
-
-  const outputNode = createNode('output', {
-    label: 'Output',
-    variables: ['result']
-  });
-
-  // Position output node at the bottom
-  outputNode.position.y = 300;
-
-  // Update nodes in the form
-  form.nodes = nodes.value.map(node => ({
-    id: node.id,
-    type: node.data.type,
-    position: node.position,
-    data: node.data
-  }));
-});
 </script>
 
 <template>
-  <Head title="Create Workflow" />
+  <Head title="Create Prompt" />
 
-  <BasePageHeading title="Create Workflow" subtitle="Design an AI workflow">
-    <template #extra>
+  <!-- BasePageHeading durch einen einfachen Div ersetzen -->
+  <div class="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="h2 mb-1">Create Prompt</h1>
+        <p class="text-muted">Design an AI prompt template</p>
+      </div>
       <nav class="breadcrumb push">
         <Link :href="route('dashboard')" class="breadcrumb-item">
           <i class="fa fa-home"></i>
         </Link>
-        <Link :href="route('workflows.index')" class="breadcrumb-item">
-          Workflows
+        <Link :href="route('prompts.index')" class="breadcrumb-item">
+          Prompts
         </Link>
         <span class="breadcrumb-item active">Create</span>
       </nav>
-    </template>
-  </BasePageHeading>
-
-  <div class="content">
-    <div class="row">
-      <!-- Workflow Details Form -->
-      <div class="col-md-12 mb-4">
-        <div class="block block-rounded">
-          <div class="block-header block-header-default">
-            <h3 class="block-title">Workflow Details</h3>
-          </div>
-          <div class="block-content">
-            <div class="row">
-              <div class="col-md-6">
-                <div class="mb-4">
-                  <label class="form-label" for="workflow-name">Name</label>
-                  <input type="text" class="form-control" id="workflow-name" v-model="form.name" placeholder="Enter workflow name">
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="mb-4">
-                  <label class="form-label" for="workflow-description">Description</label>
-                  <textarea class="form-control" id="workflow-description" v-model="form.description" rows="1" placeholder="Enter workflow description"></textarea>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Flow Designer -->
-      <div class="col-md-9">
-        <div class="block block-rounded">
-          <div class="block-header block-header-default">
-            <h3 class="block-title">Flow Designer</h3>
-            <div class="block-options">
-              <button type="button" class="btn btn-sm btn-alt-primary" @click="form.post(route('workflows.store'))">
-                <i class="fa fa-fw fa-save mr-1"></i> Save Workflow
-              </button>
-            </div>
-          </div>
-          <div class="block-content p-0">
-            <div style="height: 600px; width: 100%;">
-              <VueFlow
-                v-model="nodes"
-                :edges="edges"
-                :node-types="nodeTypes"
-                @connect="onConnect"
-                @nodesChange="onNodesChange"
-                @edgesChange="onEdgesChange"
-              >
-                <Background pattern-color="#aaa" gap="8" />
-                <MiniMap />
-                <Controls />
-                <Panel position="top-right" class="bg-body-light p-2 rounded shadow-sm">
-                  <div class="d-flex gap-1">
-                    <button type="button" class="btn btn-sm btn-alt-primary" @click="form.post(route('workflows.store'))">
-                      <i class="fa fa-fw fa-save"></i> Save
-                    </button>
-                  </div>
-                </Panel>
-              </VueFlow>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Node Palette -->
-      <div class="col-md-3">
-        <div class="block block-rounded">
-          <div class="block-header block-header-default">
-            <h3 class="block-title">Node Palette</h3>
-          </div>
-          <div class="block-content">
-            <div class="mb-3">
-              <ul class="nav nav-tabs nav-tabs-block" role="tablist">
-                <li class="nav-item" role="presentation">
-                  <button class="nav-link active" :class="{ active: activePanel === 'nodes' }" @click="activePanel = 'nodes'" role="tab">Nodes</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                  <button class="nav-link" :class="{ active: activePanel === 'settings' }" @click="activePanel = 'settings'" role="tab">Settings</button>
-                </li>
-              </ul>
-              <div class="block-content tab-content p-0">
-                <div class="tab-pane active show" :class="{ 'active show': activePanel === 'nodes' }" role="tabpanel">
-                  <div class="d-grid gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-primary" @click="addInputNode">
-                      <i class="fa fa-fw fa-arrow-right-to-bracket me-1"></i> Input
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-info" @click="addPromptNode">
-                      <i class="fa fa-fw fa-comment-dots me-1"></i> Prompt
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-warning" @click="addConditionNode">
-                      <i class="fa fa-fw fa-code-branch me-1"></i> Condition
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" @click="addApiNode">
-                      <i class="fa fa-fw fa-cloud me-1"></i> API Call
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-dark" @click="addTransformNode">
-                      <i class="fa fa-fw fa-code me-1"></i> Transform
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-success" @click="addOutputNode">
-                      <i class="fa fa-fw fa-arrow-right-from-bracket me-1"></i> Output
-                    </button>
-                  </div>
-                </div>
-                <div class="tab-pane" :class="{ 'active show': activePanel === 'settings' }" role="tabpanel">
-                  <div class="p-2">
-                    <div class="form-check mb-2">
-                      <input class="form-check-input" type="checkbox" v-model="form.settings.autoSave" id="workflow-auto-save">
-                      <label class="form-check-label" for="workflow-auto-save">
-                        Auto-save workflow
-                      </label>
-                    </div>
-                    <div class="form-check">
-                      <input class="form-check-input" type="checkbox" v-model="form.settings.notifyOnCompletion" id="workflow-notify">
-                      <label class="form-check-label" for="workflow-notify">
-                        Notify on completion
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
+
+    <!-- Create Prompt Form -->
+    <form @submit.prevent="submit">
+      <div class="block block-rounded">
+        <div class="block-header block-header-default">
+          <h3 class="block-title">Prompt Details</h3>
+          <div class="block-options">
+            <button type="submit" class="btn btn-sm btn-alt-primary" :disabled="form.processing">
+              <i class="fa fa-fw fa-check opacity-50"></i> Save Prompt
+            </button>
+          </div>
+        </div>
+        <div class="block-content block-content-full">
+          <div class="row items-push">
+            <div class="col-lg-4">
+              <p class="text-muted">
+                Create a prompt template that can be reused in your workflows. Use <code>{{variable_name}}</code> syntax for variables that can be dynamically replaced.
+              </p>
+
+              <div v-if="extractedVariables.length > 0" class="block block-rounded bg-body-light">
+                <div class="block-header">
+                  <h3 class="block-title fs-sm">
+                    <i class="fa fa-fw fa-code me-1"></i> Detected Variables
+                  </h3>
+                </div>
+                <div class="block-content">
+                  <div class="d-flex flex-wrap gap-1 mb-2">
+                    <span
+                      v-for="variable in extractedVariables"
+                      :key="variable"
+                      class="fs-sm fw-semibold d-inline-block py-1 px-3 rounded-pill bg-success-light text-success"
+                    >
+                      {{ variable }}
+                    </span>
+                  </div>
+                  <p class="fs-sm text-muted mb-0">
+                    These variables will be available for input during prompt testing and workflow execution.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Tips Block -->
+              <div class="block block-rounded bg-body-light">
+                <div class="block-header">
+                  <h3 class="block-title fs-sm">
+                    <i class="fa fa-fw fa-lightbulb me-1"></i> Prompt Engineering Tips
+                  </h3>
+                </div>
+                <div class="block-content fs-sm">
+                  <ul class="mb-0">
+                    <li>Be specific about the task you want the AI to perform</li>
+                    <li>Define the format you want the output in</li>
+                    <li>Provide examples for better results (few-shot learning)</li>
+                    <li>Break complex tasks into smaller steps</li>
+                    <li>Use variables for dynamic content</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-8">
+              <!-- Title -->
+              <div class="mb-4">
+                <label class="form-label" for="prompt-title">Title</label>
+                <input
+                  type="text"
+                  id="prompt-title"
+                  class="form-control"
+                  :class="{ 'is-invalid': form.errors.title }"
+                  v-model="form.title"
+                  placeholder="Give your prompt a descriptive name"
+                >
+                <div v-if="form.errors.title" class="invalid-feedback">{{ form.errors.title }}</div>
+              </div>
+
+              <!-- Description -->
+              <div class="mb-4">
+                <label class="form-label" for="prompt-description">Description (Optional)</label>
+                <textarea
+                  id="prompt-description"
+                  class="form-control"
+                  :class="{ 'is-invalid': form.errors.description }"
+                  v-model="form.description"
+                  rows="3"
+                  placeholder="Describe what this prompt does and how to use it"
+                ></textarea>
+                <div v-if="form.errors.description" class="invalid-feedback">{{ form.errors.description }}</div>
+              </div>
+
+              <!-- Tags -->
+              <div class="mb-4">
+                <label class="form-label" for="prompt-tags">Tags (Optional)</label>
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                  <span
+                    v-for="(tag, index) in form.tags"
+                    :key="index"
+                    class="fs-sm fw-semibold d-inline-block py-1 px-3 rounded-pill bg-primary-light text-primary"
+                  >
+                    {{ tag }}
+                    <button type="button" class="btn-close btn-close-white fs-sm ms-1" @click="removeTag(index)"></button>
+                  </span>
+                </div>
+                <div class="input-group">
+                  <input
+                    type="text"
+                    id="prompt-tags"
+                    class="form-control"
+                    v-model="newTag"
+                    @keydown="handleTagKeydown"
+                    placeholder="Add a tag and press Enter"
+                  >
+                  <button type="button" class="btn btn-alt-primary" @click="addTag">
+                    <i class="fa fa-plus me-1"></i> Add
+                  </button>
+                </div>
+                <div class="fs-sm text-muted mt-1">
+                  Tags help you organize and find your prompts later.
+                </div>
+              </div>
+
+              <!-- Content - Text Area statt MonacoEditor -->
+              <div class="mb-4">
+                <label class="form-label" for="prompt-content">Prompt Content</label>
+                <textarea
+                  id="prompt-content"
+                  class="form-control"
+                  :class="{ 'is-invalid': form.errors.content }"
+                  v-model="form.content"
+                  rows="10"
+                  placeholder="Enter your prompt template here..."
+                ></textarea>
+                <div v-if="form.errors.content" class="invalid-feedback">{{ form.errors.content }}</div>
+                <div class="fs-sm text-muted mt-1">
+                  Use <code>{{variable_name}}</code> syntax to define variables that can be replaced when using this prompt.
+                </div>
+              </div>
+
+              <!-- Submit -->
+              <div class="d-flex justify-content-end">
+                <Link
+                  :href="route('prompts.index')"
+                  class="btn btn-alt-secondary me-1"
+                  :disabled="form.processing"
+                >
+                  Cancel
+                </Link>
+                <button
+                  type="submit"
+                  class="btn btn-alt-primary"
+                  :disabled="form.processing"
+                >
+                  <i class="fa fa-fw fa-check opacity-50 me-1"></i> Create Prompt
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
   </div>
 </template>

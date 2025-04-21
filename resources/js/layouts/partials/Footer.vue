@@ -18,9 +18,9 @@ const store = useTemplateStore();
                 <i class="fa fa-heart text-danger"></i> by
                 <a
                   class="fw-semibold"
-                  href="https://pixelcave.com"
+                  href="https://www.sergejgorochow.de"
                   target="_blank"
-                  >pixelcave</a
+                  >Sergej Gorochow</a
                 >
               </slot>
             </div>
