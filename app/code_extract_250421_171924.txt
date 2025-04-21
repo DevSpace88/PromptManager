@@ -1,0 +1,2928 @@
+Dateiname: app\Events\WorkflowExecutionCompleted.php
+<?php
+
+// app/Events/WorkflowExecutionCompleted.php
+namespace App\Events;
+
+use App\Models\ExecutionLog;
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PresenceChannel;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+class WorkflowExecutionCompleted implements ShouldBroadcast
+{
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public $executionLog;
+
+    /**
+     * Create a new event instance.
+     */
+    public function __construct(ExecutionLog $executionLog)
+    {
+        $this->executionLog = $executionLog;
+    }
+
+    /**
+     * Get the channels the event should broadcast on.
+     *
+     * @return array<int, \Illuminate\Broadcasting\Channel>
+     */
+    public function broadcastOn(): array
+    {
+        return [
+            new PrivateChannel('workflow-execution.' . $this->executionLog->id),
+            new PrivateChannel('user.' . $this->executionLog->user_id),
+        ];
+    }
+
+    /**
+     * Get the data to broadcast.
+     *
+     * @return array
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'execution_id' => $this->executionLog->id,
+            'workflow_id' => $this->executionLog->workflow_id,
+            'status' => 'completed',
+            'completed_at' => $this->executionLog->completed_at,
+            'output_data' => $this->executionLog->output_data,
+        ];
+    }
+}
+
+
+
+
+
+
+Dateiname: app\Events\WorkflowExecutionFailed.php
+<?php
+
+// app/Events/WorkflowExecutionFailed.php
+namespace App\Events;
+
+use App\Models\ExecutionLog;
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PresenceChannel;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+class WorkflowExecutionFailed implements ShouldBroadcast
+{
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public $executionLog;
+
+    /**
+     * Create a new event instance.
+     */
+    public function __construct(ExecutionLog $executionLog)
+    {
+        $this->executionLog = $executionLog;
+    }
+
+    /**
+     * Get the channels the event should broadcast on.
+     *
+     * @return array<int, \Illuminate\Broadcasting\Channel>
+     */
+    public function broadcastOn(): array
+    {
+        return [
+            new PrivateChannel('workflow-execution.' . $this->executionLog->id),
+            new PrivateChannel('user.' . $this->executionLog->user_id),
+        ];
+    }
+
+    /**
+     * Get the data to broadcast.
+     *
+     * @return array
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'execution_id' => $this->executionLog->id,
+            'workflow_id' => $this->executionLog->workflow_id,
+            'status' => 'failed',
+            'error' => $this->executionLog->error,
+            'completed_at' => $this->executionLog->completed_at,
+        ];
+    }
+}
+
+
+
+Dateiname: app\Events\WorkflowExecutionStarted.php
+<?php
+
+// app/Events/WorkflowExecutionStarted.php
+namespace App\Events;
+
+use App\Models\ExecutionLog;
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PresenceChannel;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+class WorkflowExecutionStarted implements ShouldBroadcast
+{
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public $executionLog;
+
+    /**
+     * Create a new event instance.
+     */
+    public function __construct(ExecutionLog $executionLog)
+    {
+        $this->executionLog = $executionLog;
+    }
+
+    /**
+     * Get the channels the event should broadcast on.
+     *
+     * @return array<int, \Illuminate\Broadcasting\Channel>
+     */
+    public function broadcastOn(): array
+    {
+        return [
+            new PrivateChannel('workflow-execution.' . $this->executionLog->id),
+            new PrivateChannel('user.' . $this->executionLog->user_id),
+        ];
+    }
+
+    /**
+     * Get the data to broadcast.
+     *
+     * @return array
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'execution_id' => $this->executionLog->id,
+            'workflow_id' => $this->executionLog->workflow_id,
+            'status' => 'started',
+            'started_at' => $this->executionLog->started_at,
+        ];
+    }
+}
+
+
+
+Dateiname: app\Http\Controllers\ApiKeyController.php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\ApiKey;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
+
+class ApiKeyController extends Controller
+{
+    public function index()
+    {
+        $apiKeys = ApiKey::where('user_id', Auth::id())
+            ->orderBy('provider')
+            ->get();
+
+        // Don't expose the full key, but provide a masked version
+        $apiKeys->transform(function ($apiKey) {
+            $apiKey->masked_key = $this->maskApiKey($apiKey->key);
+            return $apiKey;
+        });
+
+        return Inertia::render('Pages/ApiKeys/Index', [
+            'apiKeys' => $apiKeys
+        ]);
+    }
+
+    protected function maskApiKey($key)
+    {
+        if (strlen($key) <= 8) {
+            return '********';
+        }
+
+        return substr($key, 0, 4) . '...' . substr($key, -4);
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'provider' => 'required|string',
+            'key' => 'required|string',
+            'label' => 'nullable|string|max:255',
+            'is_default' => 'boolean',
+        ]);
+
+        // If this is set as default, unset others for this provider
+        if ($request->is_default) {
+            ApiKey::where('user_id', Auth::id())
+                ->where('provider', $request->provider)
+                ->update(['is_default' => false]);
+        }
+
+        $apiKey = ApiKey::create([
+            'user_id' => Auth::id(),
+            'provider' => $request->provider,
+            'key' => $request->key,
+            'label' => $request->label,
+            'is_default' => $request->is_default ?? false,
+        ]);
+
+        return redirect()->route('api-keys.index')
+            ->with('success', 'API key added successfully.');
+    }
+
+    public function update(Request $request, ApiKey $apiKey)
+    {
+        if ($apiKey->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'label' => 'nullable|string|max:255',
+            'is_default' => 'boolean',
+        ]);
+
+        // If new key is provided, validate and update it
+        if ($request->filled('key')) {
+            $request->validate([
+                'key' => 'required|string',
+            ]);
+
+            $apiKey->key = $request->key;
+        }
+
+        // If this is set as default, unset others for this provider
+        if ($request->is_default && !$apiKey->is_default) {
+            ApiKey::where('user_id', Auth::id())
+                ->where('provider', $apiKey->provider)
+                ->update(['is_default' => false]);
+        }
+
+        $apiKey->label = $request->label;
+        $apiKey->is_default = $request->is_default ?? $apiKey->is_default;
+        $apiKey->save();
+
+        return redirect()->route('api-keys.index')
+            ->with('success', 'API key updated successfully.');
+    }
+
+    public function destroy(ApiKey $apiKey)
+    {
+        if ($apiKey->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $apiKey->delete();
+
+        return redirect()->route('api-keys.index')
+            ->with('success', 'API key deleted successfully.');
+    }
+}
+
+
+
+Dateiname: app\Http\Controllers\Controller.php
+<?php
+
+namespace App\Http\Controllers;
+
+abstract class Controller
+{
+    //
+}
+
+
+
+Dateiname: app\Http\Controllers\DashboardController.php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\ApiKey;
+use App\Models\Prompt;
+use App\Models\Workflow;
+use App\Models\ExecutionLog;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+
+class DashboardController extends Controller
+{
+    public function index()
+    {
+        // Authentifizierten Benutzer abrufen
+        $user = auth()->user();
+
+        // Zähle die Anzahl von Prompts, Workflows und API-Keys für den angemeldeten Benutzer
+        $promptCount = Prompt::where('user_id', $user->id)->count();
+        $workflowCount = Workflow::where('user_id', $user->id)->count();
+        $apiKeyCount = ApiKey::where('user_id', $user->id)->count();
+
+        // Hole die neuesten Ausführungslogs
+        $recentExecutions = ExecutionLog::with('workflow')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function ($log) {
+                return [
+                    'id' => $log->id,
+                    'workflow_name' => $log->workflow->name,
+                    'status' => $log->status,
+                    'created_at' => $log->created_at,
+                    'completed_at' => $log->completed_at,
+                ];
+            });
+
+        // Hole die am häufigsten verwendeten Prompts (basierend auf Ausführungslogs)
+        // Da keine direkte Beziehung zwischen Prompts und Logs besteht,
+        // nehmen wir hier an, dass die neuesten Prompts relevant sind
+        $popularPrompts = Prompt::where('user_id', $user->id)
+            ->with('versions')
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function ($prompt) {
+                return [
+                    'id' => $prompt->id,
+                    'title' => $prompt->title,
+                    'description' => $prompt->description,
+                    'created_at' => $prompt->created_at,
+                    'version_count' => $prompt->versions->count()
+                ];
+            });
+
+        return Inertia::render('Pages/Dashboard', [
+            'promptCount' => $promptCount,
+            'workflowCount' => $workflowCount,
+            'apiKeyCount' => $apiKeyCount,
+            'recentExecutions' => $recentExecutions,
+            'popularPrompts' => $popularPrompts,
+        ]);
+    }
+
+}
+
+
+
+Dateiname: app\Http\Controllers\PlaygroundController.php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Prompt;
+use App\Services\AiService;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
+
+class PlaygroundController extends Controller
+{
+    protected $aiService;
+
+    public function __construct(AiService $aiService)
+    {
+        $this->aiService = $aiService;
+    }
+
+    public function index()
+    {
+        $prompts = Prompt::with('currentVersion')
+            ->where('user_id', Auth::id())
+            ->orderBy('title')
+            ->get();
+
+        return Inertia::render('Pages/Playground/Index', [
+            'prompts' => $prompts,
+        ]);
+    }
+
+    public function show(Prompt $prompt)
+    {
+        if ($prompt->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $prompt->load('currentVersion');
+
+        return Inertia::render('Pages/Playground/Show', [
+            'prompt' => $prompt,
+            'currentVersion' => $prompt->currentVersion(),
+        ]);
+    }
+
+    public function test(Request $request)
+    {
+        $request->validate([
+            'prompt_id' => 'nullable|exists:prompts,id',
+            'content' => 'required|string',
+            'variables' => 'nullable|array',
+            'provider' => 'required|string',
+            'model' => 'required|string',
+            'temperature' => 'required|numeric|min:0|max:2',
+            'max_tokens' => 'required|integer|min:1|max:8192',
+        ]);
+
+        // Replace variables in content
+        $content = $request->content;
+        if ($request->variables) {
+            foreach ($request->variables as $key => $value) {
+                $content = str_replace("{{" . $key . "}}", $value, $content);
+            }
+        }
+
+        // Call AI Service
+        $response = $this->aiService->generateCompletion(
+            $request->provider,
+            $request->model,
+            $content,
+            $request->temperature,
+            $request->max_tokens
+        );
+
+        return response()->json($response);
+    }
+
+    public function compare(Request $request)
+    {
+        $request->validate([
+            'prompt_id' => 'required|exists:prompts,id',
+            'version_ids' => 'required|array',
+            'version_ids.*' => 'exists:prompt_versions,id',
+            'variables' => 'required|array',
+            'provider' => 'required|string',
+            'model' => 'required|string',
+            'temperature' => 'required|numeric|min:0|max:2',
+            'max_tokens' => 'required|integer|min:1|max:8192',
+        ]);
+
+        $prompt = Prompt::findOrFail($request->prompt_id);
+
+        if ($prompt->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $results = [];
+
+        foreach ($request->version_ids as $versionId) {
+            $version = $prompt->versions()->findOrFail($versionId);
+
+            // Replace variables in content
+            $content = $version->content;
+            foreach ($request->variables as $key => $value) {
+                $content = str_replace("{{" . $key . "}}", $value, $content);
+            }
+
+            // Call AI Service
+            $response = $this->aiService->generateCompletion(
+                $request->provider,
+                $request->model,
+                $content,
+                $request->temperature,
+                $request->max_tokens
+            );
+
+            $results[] = [
+                'version_id' => $versionId,
+                'version_number' => $version->version,
+                'response' => $response,
+            ];
+        }
+
+        return response()->json(['results' => $results]);
+    }
+}
+
+
+
+Dateiname: app\Http\Controllers\ProfileController.php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\ProfileUpdateRequest;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redirect;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class ProfileController extends Controller
+{
+    /**
+     * Display the user's profile form.
+     */
+    public function edit(Request $request): Response
+    {
+        return Inertia::render('profile/Edit', [
+            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+            'status' => session('status'),
+        ]);
+    }
+
+    /**
+     * Update the user's profile information.
+     */
+    public function update(ProfileUpdateRequest $request): RedirectResponse
+    {
+        $request->user()->fill($request->validated());
+
+        if ($request->user()->isDirty('email')) {
+            $request->user()->email_verified_at = null;
+        }
+
+        $request->user()->save();
+
+        return Redirect::route('profile.edit');
+    }
+
+    /**
+     * Delete the user's account.
+     */
+    public function destroy(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'password' => ['required', 'current_password'],
+        ]);
+
+        $user = $request->user();
+
+        Auth::logout();
+
+        $user->delete();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return Redirect::to('/');
+    }
+}
+
+
+
+Dateiname: app\Http\Controllers\PromptController.php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Prompt;
+use App\Models\PromptVersion;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
+
+class PromptController extends Controller
+{
+    public function index()
+    {
+        $prompts = Prompt::with('currentVersion')
+            ->where('user_id', Auth::id())
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        return Inertia::render('Pages/Prompts/Index', [
+            'prompts' => $prompts
+        ]);
+    }
+
+    public function create()
+    {
+        return Inertia::render('Pages/Prompts/Create');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'content' => 'required|string',
+            'tags' => 'nullable|array',
+        ]);
+
+        $prompt = Prompt::create([
+            'user_id' => Auth::id(),
+            'title' => $request->title,
+            'description' => $request->description,
+            'tags' => $request->tags,
+        ]);
+
+        $promptVersion = new PromptVersion();
+        $promptVersion->prompt_id = $prompt->id;
+        $promptVersion->content = $request->content;
+        $promptVersion->version = 1;
+        $promptVersion->is_current = true;
+        $promptVersion->extractVariablesFromContent();
+        $promptVersion->save();
+
+        return redirect()->route('prompts.show', $prompt)
+            ->with('success', 'Prompt created successfully.');
+    }
+
+    public function show(Prompt $prompt)
+    {
+        if ($prompt->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $prompt->load([
+            'versions' => function ($query) {
+                $query->orderBy('version', 'desc');
+            },
+            'currentVersion' // currentVersion-Beziehung laden
+        ]);
+
+        return Inertia::render('Pages/Prompts/Show', [
+            'prompt' => $prompt,
+            'currentVersion' => $prompt->currentVersion, // Direkt auf die geladene Beziehung zugreifen
+        ]);
+    }
+
+    public function edit(Prompt $prompt)
+    {
+        if ($prompt->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $prompt->load('currentVersion')->first();
+
+        return Inertia::render('Pages/Prompts/Edit', [
+            'prompt' => $prompt,
+            'currentVersion' => $prompt->currentVersion,
+        ]);
+    }
+
+    public function update(Request $request, Prompt $prompt)
+    {
+        if ($prompt->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'content' => 'required|string',
+            'tags' => 'nullable|array',
+        ]);
+
+        $prompt->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'tags' => $request->tags,
+        ]);
+
+        $currentVersion = $prompt->currentVersion()->first();
+
+        // Only create a new version if content has changed
+        if ($currentVersion && $currentVersion->content !== $request->content) {
+
+            // Mark old version as not current
+            $currentVersion->update(['is_current' => false]);
+
+            // Create new version
+            $promptVersion = new PromptVersion();
+            $promptVersion->prompt_id = $prompt->id;
+            $promptVersion->content = $request->content;
+            $promptVersion->version = $currentVersion->version + 1;
+            $promptVersion->is_current = true;
+            $promptVersion->extractVariablesFromContent();
+            $promptVersion->save();
+        }
+
+        return redirect()->route('prompts.show', $prompt)
+            ->with('success', 'Prompt updated successfully.');
+    }
+
+    public function destroy(Prompt $prompt)
+    {
+        if ($prompt->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $prompt->delete();
+
+        return redirect()->route('prompts.index')
+            ->with('success', 'Prompt deleted successfully.');
+    }
+
+    public function setVersion(Request $request, Prompt $prompt, PromptVersion $version)
+    {
+        if ($prompt->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Ensure the version belongs to this prompt
+        if ($version->prompt_id !== $prompt->id) {
+            abort(400, 'Invalid version');
+        }
+
+        // Update all versions to not be current
+        $prompt->versions()->update(['is_current' => false]);
+
+        // Set this version as current
+        $version->update(['is_current' => true]);
+
+        return redirect()->back()->with('success', 'Version set as current.');
+    }
+}
+
+
+
+Dateiname: app\Http\Controllers\SettingsController.php
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+
+class SettingsController extends Controller
+{
+    public function index()
+    {
+        return Inertia::render('Settings');
+    }
+
+    public function update(Request $request)
+    {
+        // Validiere und speichere die Einstellungen
+        // ...
+
+        return redirect()->route('settings.index')->with('success', 'Einstellungen wurden aktualisiert');
+    }
+}
+
+
+
+Dateiname: app\Http\Controllers\WorkflowController.php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Workflow;
+use App\Models\ExecutionLog;
+use App\Jobs\ExecuteWorkflowJob;
+use App\Services\WorkflowExecutionService;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
+
+class WorkflowController extends Controller
+{
+    protected $workflowService;
+
+    public function __construct(WorkflowExecutionService $workflowService)
+    {
+        $this->workflowService = $workflowService;
+    }
+
+    public function index()
+    {
+        $workflows = Workflow::where('user_id', Auth::id())
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        return Inertia::render('Pages/Workflows/Index', [
+            'workflows' => $workflows
+        ]);
+    }
+
+    public function create()
+    {
+        return Inertia::render('Pages/Workflows/Create');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'nodes' => 'required|array',
+            'edges' => 'required|array',
+            'settings' => 'nullable|array',
+        ]);
+
+        $workflow = Workflow::create([
+            'user_id' => Auth::id(),
+            'name' => $request->name,
+            'description' => $request->description,
+            'nodes' => $request->nodes,
+            'edges' => $request->edges,
+            'settings' => $request->settings,
+            'is_active' => true,
+        ]);
+
+        return redirect()->route('workflows.show', $workflow)
+            ->with('success', 'Workflow created successfully.');
+    }
+
+    public function show(Workflow $workflow)
+    {
+        if ($workflow->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $recentExecutions = $workflow->executionLogs()
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        return Inertia::render('Pages/Workflows/Show', [
+            'workflow' => $workflow,
+            'recentExecutions' => $recentExecutions,
+        ]);
+    }
+
+    public function edit(Workflow $workflow)
+    {
+        if ($workflow->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        return Inertia::render('Pages/Workflows/Edit', [
+            'workflow' => $workflow,
+        ]);
+    }
+
+    public function update(Request $request, Workflow $workflow)
+    {
+        if ($workflow->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'nodes' => 'required|array',
+            'edges' => 'required|array',
+            'settings' => 'nullable|array',
+            'is_active' => 'boolean',
+        ]);
+
+        $workflow->update([
+            'name' => $request->name,
+            'description' => $request->description,
+            'nodes' => $request->nodes,
+            'edges' => $request->edges,
+            'settings' => $request->settings,
+            'is_active' => $request->is_active ?? $workflow->is_active,
+        ]);
+
+        return redirect()->route('workflows.show', $workflow)
+            ->with('success', 'Workflow updated successfully.');
+    }
+
+    public function destroy(Workflow $workflow)
+    {
+        if ($workflow->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $workflow->delete();
+
+        return redirect()->route('workflows.index')
+            ->with('success', 'Workflow deleted successfully.');
+    }
+
+    public function execute(Request $request, Workflow $workflow)
+    {
+        if ($workflow->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        if (!$workflow->is_active) {
+            return response()->json(['error' => 'Workflow is not active'], 400);
+        }
+
+        $request->validate([
+            'input_data' => 'nullable|array',
+        ]);
+
+        // Create execution log
+        $executionLog = ExecutionLog::create([
+            'workflow_id' => $workflow->id,
+            'user_id' => Auth::id(),
+            'status' => 'pending',
+            'input_data' => $request->input_data ?? [],
+            'started_at' => now(),
+        ]);
+
+        // Dispatch job to run workflow
+        ExecuteWorkflowJob::dispatch($executionLog);
+
+        return response()->json([
+            'execution_id' => $executionLog->id,
+            'message' => 'Workflow execution started',
+        ]);
+    }
+
+    public function getExecutionStatus(ExecutionLog $executionLog)
+    {
+        if ($executionLog->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        return response()->json([
+            'status' => $executionLog->status,
+            'started_at' => $executionLog->started_at,
+            'completed_at' => $executionLog->completed_at,
+            'node_results' => $executionLog->node_results,
+            'output_data' => $executionLog->output_data,
+            'error' => $executionLog->error,
+        ]);
+    }
+
+    public function exportWorkflow(Workflow $workflow)
+    {
+        if ($workflow->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $exportData = [
+            'name' => $workflow->name,
+            'description' => $workflow->description,
+            'nodes' => $workflow->nodes,
+            'edges' => $workflow->edges,
+            'settings' => $workflow->settings,
+            'created_at' => $workflow->created_at,
+            'updated_at' => $workflow->updated_at,
+        ];
+
+        return response()->json($exportData);
+    }
+
+    public function importWorkflow(Request $request)
+    {
+        $request->validate([
+            'workflow_data' => 'required|json',
+        ]);
+
+        $workflowData = json_decode($request->workflow_data, true);
+
+        if (!isset($workflowData['name']) || !isset($workflowData['nodes']) || !isset($workflowData['edges'])) {
+            return response()->json(['error' => 'Invalid workflow data'], 400);
+        }
+
+        $workflow = Workflow::create([
+            'user_id' => Auth::id(),
+            'name' => $workflowData['name'],
+            'description' => $workflowData['description'] ?? null,
+            'nodes' => $workflowData['nodes'],
+            'edges' => $workflowData['edges'],
+            'settings' => $workflowData['settings'] ?? null,
+            'is_active' => true,
+        ]);
+
+        return redirect()->route('workflows.show', $workflow)
+            ->with('success', 'Workflow imported successfully.');
+    }
+}
+
+
+
+Dateiname: app\Http\Controllers\Auth\AuthenticatedSessionController.php
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class AuthenticatedSessionController extends Controller
+{
+    /**
+     * Display the login view.
+     */
+    public function create(): Response
+    {
+        return Inertia::render('auth/Login', [
+            'canResetPassword' => Route::has('password.request'),
+            'status' => session('status'),
+        ]);
+    }
+
+    /**
+     * Handle an incoming authentication request.
+     */
+    public function store(LoginRequest $request): RedirectResponse
+    {
+        $request->authenticate();
+
+        $request->session()->regenerate();
+
+        return redirect()->intended(route('dashboard', absolute: false));
+    }
+
+    /**
+     * Destroy an authenticated session.
+     */
+    public function destroy(Request $request): RedirectResponse
+    {
+        Auth::guard('web')->logout();
+
+        $request->session()->invalidate();
+
+        $request->session()->regenerateToken();
+
+        return redirect('/');
+    }
+}
+
+
+
+Dateiname: app\Http\Controllers\Auth\ConfirmablePasswordController.php
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class ConfirmablePasswordController extends Controller
+{
+    /**
+     * Show the confirm password view.
+     */
+    public function show(): Response
+    {
+        return Inertia::render('auth/ConfirmPassword');
+    }
+
+    /**
+     * Confirm the user's password.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        if (! Auth::guard('web')->validate([
+            'email' => $request->user()->email,
+            'password' => $request->password,
+        ])) {
+            throw ValidationException::withMessages([
+                'password' => __('auth.password'),
+            ]);
+        }
+
+        $request->session()->put('auth.password_confirmed_at', time());
+
+        return redirect()->intended(route('dashboard', absolute: false));
+    }
+}
+
+
+
+Dateiname: app\Http\Controllers\Auth\EmailVerificationNotificationController.php
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+
+class EmailVerificationNotificationController extends Controller
+{
+    /**
+     * Send a new email verification notification.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        if ($request->user()->hasVerifiedEmail()) {
+            return redirect()->intended(route('dashboard', absolute: false));
+        }
+
+        $request->user()->sendEmailVerificationNotification();
+
+        return back()->with('status', 'verification-link-sent');
+    }
+}
+
+
+
+Dateiname: app\Http\Controllers\Auth\EmailVerificationPromptController.php
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class EmailVerificationPromptController extends Controller
+{
+    /**
+     * Display the email verification prompt.
+     */
+    public function __invoke(Request $request): RedirectResponse|Response
+    {
+        return $request->user()->hasVerifiedEmail()
+            ? redirect()->intended(route('dashboard', absolute: false))
+            : Inertia::render('auth/VerifyEmail', ['status' => session('status')]);
+    }
+}
+
+
+
+Dateiname: app\Http\Controllers\Auth\NewPasswordController.php
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rules;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class NewPasswordController extends Controller
+{
+    /**
+     * Display the password reset view.
+     */
+    public function create(Request $request): Response
+    {
+        return Inertia::render('auth/ResetPassword', [
+            'email' => $request->email,
+            'token' => $request->route('token'),
+        ]);
+    }
+
+    /**
+     * Handle an incoming new password request.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ]);
+
+        // Here we will attempt to reset the user's password. If it is successful we
+        // will update the password on an actual user model and persist it to the
+        // database. Otherwise we will parse the error and return the response.
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user) use ($request) {
+                $user->forceFill([
+                    'password' => Hash::make($request->password),
+                    'remember_token' => Str::random(60),
+                ])->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        // If the password was successfully reset, we will redirect the user back to
+        // the application's home authenticated view. If there is an error we can
+        // redirect them back to where they came from with their error message.
+        if ($status == Password::PASSWORD_RESET) {
+            return redirect()->route('login')->with('status', __($status));
+        }
+
+        throw ValidationException::withMessages([
+            'email' => [trans($status)],
+        ]);
+    }
+}
+
+
+
+Dateiname: app\Http\Controllers\Auth\PasswordController.php
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
+
+class PasswordController extends Controller
+{
+    /**
+     * Update the user's password.
+     */
+    public function update(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', Password::defaults(), 'confirmed'],
+        ]);
+
+        $request->user()->update([
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        return back();
+    }
+}
+
+
+
+Dateiname: app\Http\Controllers\Auth\PasswordResetLinkController.php
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class PasswordResetLinkController extends Controller
+{
+    /**
+     * Display the password reset link request view.
+     */
+    public function create(): Response
+    {
+        return Inertia::render('auth/ForgotPassword', [
+            'status' => session('status'),
+        ]);
+    }
+
+    /**
+     * Handle an incoming password reset link request.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        // We will send the password reset link to this user. Once we have attempted
+        // to send the link, we will examine the response then see the message we
+        // need to show to the user. Finally, we'll send out a proper response.
+        $status = Password::sendResetLink(
+            $request->only('email')
+        );
+
+        if ($status == Password::RESET_LINK_SENT) {
+            return back()->with('status', __($status));
+        }
+
+        throw ValidationException::withMessages([
+            'email' => [trans($status)],
+        ]);
+    }
+}
+
+
+
+Dateiname: app\Http\Controllers\Auth\RegisteredUserController.php
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class RegisteredUserController extends Controller
+{
+    /**
+     * Display the registration view.
+     */
+    public function create(): Response
+    {
+        return Inertia::render('auth/Register');
+    }
+
+    /**
+     * Handle an incoming registration request.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ]);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+
+        event(new Registered($user));
+
+        Auth::login($user);
+
+        return redirect(route('dashboard', absolute: false));
+    }
+}
+
+
+
+Dateiname: app\Http\Controllers\Auth\VerifyEmailController.php
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Auth\Events\Verified;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\RedirectResponse;
+
+class VerifyEmailController extends Controller
+{
+    /**
+     * Mark the authenticated user's email address as verified.
+     */
+    public function __invoke(EmailVerificationRequest $request): RedirectResponse
+    {
+        if ($request->user()->hasVerifiedEmail()) {
+            return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+        }
+
+        if ($request->user()->markEmailAsVerified()) {
+            event(new Verified($request->user()));
+        }
+
+        return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+    }
+}
+
+
+
+Dateiname: app\Http\Middleware\HandleInertiaRequests.php
+<?php
+
+namespace App\Http\Middleware;
+
+use Illuminate\Http\Request;
+use Inertia\Middleware;
+
+class HandleInertiaRequests extends Middleware
+{
+    /**
+     * The root template that's loaded on the first page visit.
+     *
+     * @see https://inertiajs.com/server-side-setup#root-template
+     *
+     * @var string
+     */
+    protected $rootView = 'app';
+
+    /**
+     * Determines the current asset version.
+     *
+     * @see https://inertiajs.com/asset-versioning
+     */
+    public function version(Request $request): ?string
+    {
+        return parent::version($request);
+    }
+
+    /**
+     * Define the props that are shared by default.
+     *
+     * @see https://inertiajs.com/shared-data
+     *
+     * @return array<string, mixed>
+     */
+    public function share(Request $request): array
+    {
+        return array_merge(parent::share($request), [
+            'auth' => [
+                'user' => $request->user() ? array_merge($request->user()->toArray(), [
+                    'gravatar' => $request->user()->gravatar,
+                ]) : null,
+            ],
+        ]);
+    }
+}
+
+
+
+Dateiname: app\Http\Requests\ProfileUpdateRequest.php
+<?php
+
+namespace App\Http\Requests;
+
+use App\Models\User;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class ProfileUpdateRequest extends FormRequest
+{
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\Rule|array|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                Rule::unique(User::class)->ignore($this->user()->id),
+            ],
+        ];
+    }
+}
+
+
+
+Dateiname: app\Http\Requests\Auth\LoginRequest.php
+<?php
+
+namespace App\Http\Requests\Auth;
+
+use Illuminate\Auth\Events\Lockout;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+
+class LoginRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\Rule|array|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'email' => ['required', 'string', 'email'],
+            'password' => ['required', 'string'],
+        ];
+    }
+
+    /**
+     * Attempt to authenticate the request's credentials.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function authenticate(): void
+    {
+        $this->ensureIsNotRateLimited();
+
+        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => trans('auth.failed'),
+            ]);
+        }
+
+        RateLimiter::clear($this->throttleKey());
+    }
+
+    /**
+     * Ensure the login request is not rate limited.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function ensureIsNotRateLimited(): void
+    {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+            return;
+        }
+
+        event(new Lockout($this));
+
+        $seconds = RateLimiter::availableIn($this->throttleKey());
+
+        throw ValidationException::withMessages([
+            'email' => trans('auth.throttle', [
+                'seconds' => $seconds,
+                'minutes' => ceil($seconds / 60),
+            ]),
+        ]);
+    }
+
+    /**
+     * Get the rate limiting throttle key for the request.
+     */
+    public function throttleKey(): string
+    {
+        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+    }
+}
+
+
+
+Dateiname: app\Jobs\ExecuteWorkflowJob.php
+<?php
+
+// app/Jobs/ExecuteWorkflowJob.php
+namespace App\Jobs;
+
+use App\Models\ExecutionLog;
+use App\Services\WorkflowExecutionService;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+
+class ExecuteWorkflowJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    protected $executionLog;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct(ExecutionLog $executionLog)
+    {
+        $this->executionLog = $executionLog;
+    }
+
+    /**
+     * Execute the job.
+     */
+    public function handle(WorkflowExecutionService $workflowService): void
+    {
+        try {
+            Log::info('Starting workflow execution', [
+                'execution_id' => $this->executionLog->id,
+                'workflow_id' => $this->executionLog->workflow_id
+            ]);
+
+            $result = $workflowService->execute($this->executionLog);
+
+            Log::info('Workflow execution completed', [
+                'execution_id' => $this->executionLog->id,
+                'success' => $result['success']
+            ]);
+
+            // Emit event for real-time updates
+            event(new \App\Events\WorkflowExecutionCompleted($this->executionLog));
+        } catch (\Exception $e) {
+            Log::error('Workflow execution failed', [
+                'execution_id' => $this->executionLog->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Update execution log with error
+            $this->executionLog->update([
+                'status' => 'failed',
+                'error' => $e->getMessage(),
+                'completed_at' => now()
+            ]);
+
+            // Emit event for real-time updates
+            event(new \App\Events\WorkflowExecutionFailed($this->executionLog));
+        }
+    }
+}
+
+
+
+Dateiname: app\Models\ApiKey.php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class ApiKey extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id',
+        'provider',
+        'key',
+        'label',
+        'is_default',
+    ];
+
+    protected $casts = [
+        'is_default' => 'boolean',
+    ];
+
+    // Automatically encrypt the API key
+    protected $hidden = [
+        'key',
+    ];
+
+    protected function key(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => decrypt($value),
+            set: fn ($value) => encrypt($value),
+        );
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+}
+
+
+
+Dateiname: app\Models\ExecutionLog.php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class ExecutionLog extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'workflow_id',
+        'user_id',
+        'status',
+        'input_data',
+        'output_data',
+        'node_results',
+        'error',
+        'started_at',
+        'completed_at',
+    ];
+
+    protected $casts = [
+        'input_data' => 'array',
+        'output_data' => 'array',
+        'node_results' => 'array',
+        'started_at' => 'datetime',
+        'completed_at' => 'datetime',
+    ];
+
+    public function workflow(): BelongsTo
+    {
+        return $this->belongsTo(Workflow::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+}
+
+
+
+Dateiname: app\Models\Prompt.php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+//use Spatie\Activitylog\Traits\LogsActivity;
+//use Spatie\Activitylog\LogOptions;
+
+class Prompt extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        'user_id',
+        'title',
+        'description',
+        'tags',
+    ];
+
+    protected $casts = [
+        'tags' => 'array',
+    ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['title', 'description', 'tags'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function versions(): HasMany
+    {
+        return $this->hasMany(PromptVersion::class);
+    }
+
+    public function currentVersion(): HasOne
+    {
+        return $this->hasOne(PromptVersion::class)->where('is_current', true);
+    }
+}
+
+
+
+Dateiname: app\Models\PromptVersion.php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class PromptVersion extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'prompt_id',
+        'content',
+        'variables',
+        'version',
+        'is_current',
+    ];
+
+    protected $casts = [
+        'variables' => 'array',
+        'is_current' => 'boolean',
+    ];
+
+    public function prompt(): BelongsTo
+    {
+        return $this->belongsTo(Prompt::class);
+    }
+
+    // Extract variables from content {{variable}}
+    public function extractVariablesFromContent()
+    {
+        preg_match_all('/\{\{(.*?)\}\}/', $this->content, $matches);
+        $this->variables = array_unique($matches[1]);
+        return $this->variables;
+    }
+}
+
+
+
+Dateiname: app\Models\User.php
+<?php
+
+namespace App\Models;
+
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+
+class User extends Authenticatable
+{
+    /** @use HasFactory<\Database\Factories\UserFactory> */
+    use HasFactory, Notifiable;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
+
+    /**
+     * Returns Gravatar url
+     *
+     */
+    public function getGravatarAttribute(): string
+    {
+        return 'https://www.gravatar.com/avatar/' . md5(strtolower(trim($this->email))) . '?s=128';
+    }
+
+    public function prompts()
+    {
+        return $this->hasMany(Prompt::class);
+    }
+
+    public function workflows()
+    {
+        return $this->hasMany(Workflow::class);
+    }
+
+    public function apiKeys()
+    {
+        return $this->hasMany(ApiKey::class);
+    }
+
+    public function executionLogs()
+    {
+        return $this->hasMany(ExecutionLog::class);
+    }
+
+    public function settings()
+    {
+        return $this->hasOne(UserSetting::class);
+    }
+}
+
+
+
+Dateiname: app\Models\UserSetting.php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class UserSetting extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id',
+        'default_provider',
+        'default_model',
+        'default_temperature',
+        'default_max_tokens',
+        'ui_theme',
+        'other_settings',
+    ];
+
+    protected $casts = [
+        'default_temperature' => 'float',
+        'default_max_tokens' => 'integer',
+        'other_settings' => 'array',
+    ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+}
+
+
+
+Dateiname: app\Models\Workflow.php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+//use Spatie\Activitylog\Traits\LogsActivity;
+//use Spatie\Activitylog\LogOptions;
+
+class Workflow extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        'user_id',
+        'name',
+        'description',
+        'nodes',
+        'edges',
+        'settings',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'nodes' => 'array',
+        'edges' => 'array',
+        'settings' => 'array',
+        'is_active' => 'boolean',
+    ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'description', 'nodes', 'edges', 'settings', 'is_active'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function executionLogs(): HasMany
+    {
+        return $this->hasMany(ExecutionLog::class);
+    }
+}
+
+
+
+Dateiname: app\Providers\AppServiceProvider.php
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\Facades\Vite;
+use Illuminate\Support\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * Register any application services.
+     */
+    public function register(): void
+    {
+        //
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        Vite::prefetch(concurrency: 3);
+    }
+}
+
+
+
+Dateiname: app\Services\AIService.php
+<?php
+
+namespace App\Services;
+
+use App\Models\ApiKey;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class AIService
+{
+    /**
+     * Generate a completion from an AI provider
+     */
+    public function generateCompletion(string $provider, string $model, string $prompt, float $temperature = 0.7, int $maxTokens = 2000)
+    {
+        // Get API key for the provider
+        $apiKey = $this->getApiKey($provider);
+
+        if (!$apiKey) {
+            return [
+                'error' => true,
+                'message' => "No API key found for provider: {$provider}",
+            ];
+        }
+
+        // Call the appropriate provider method
+        return match($provider) {
+            'openai' => $this->callOpenAi($apiKey, $model, $prompt, $temperature, $maxTokens),
+            'anthropic' => $this->callAnthropic($apiKey, $model, $prompt, $temperature, $maxTokens),
+            'google' => $this->callGoogle($apiKey, $model, $prompt, $temperature, $maxTokens),
+            'ollama' => $this->callOllama($apiKey, $model, $prompt, $temperature, $maxTokens),
+            default => [
+                'error' => true,
+                'message' => "Unsupported provider: {$provider}",
+            ],
+        };
+    }
+
+    /**
+     * Get API key for a provider
+     */
+    protected function getApiKey(string $provider)
+    {
+        // First try to get the default key for this provider
+        $apiKey = ApiKey::where('user_id', Auth::id())
+            ->where('provider', $provider)
+            ->where('is_default', true)
+            ->first();
+
+        // If no default key, get any key for this provider
+        if (!$apiKey) {
+            $apiKey = ApiKey::where('user_id', Auth::id())
+                ->where('provider', $provider)
+                ->first();
+        }
+
+        return $apiKey ? $apiKey->key : null;
+    }
+
+    /**
+     * Call OpenAI API
+     */
+    protected function callOpenAi(string $apiKey, string $model, string $prompt, float $temperature, int $maxTokens)
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$apiKey}",
+                'Content-Type' => 'application/json',
+            ])->post('https://api.openai.com/v1/chat/completions', [
+                'model' => $model,
+                'messages' => [
+                    ['role' => 'user', 'content' => $prompt]
+                ],
+                'temperature' => $temperature,
+                'max_tokens' => $maxTokens,
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return [
+                    'error' => false,
+                    'text' => $data['choices'][0]['message']['content'],
+                    'model' => $model,
+                    'provider' => 'openai',
+                    'raw_response' => $data,
+                ];
+            } else {
+                Log::error('OpenAI API error', [
+                    'status' => $response->status(),
+                    'response' => $response->json(),
+                ]);
+
+                return [
+                    'error' => true,
+                    'message' => 'OpenAI API error: ' . ($response->json()['error']['message'] ?? 'Unknown error'),
+                    'status' => $response->status(),
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('OpenAI API exception', [
+                'exception' => $e->getMessage(),
+            ]);
+
+            return [
+                'error' => true,
+                'message' => 'OpenAI API exception: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Call Anthropic API
+     */
+    protected function callAnthropic(string $apiKey, string $model, string $prompt, float $temperature, int $maxTokens)
+    {
+        try {
+            $response = Http::withHeaders([
+                'x-api-key' => $apiKey,
+                'Content-Type' => 'application/json',
+                'anthropic-version' => '2023-06-01',
+            ])->post('https://api.anthropic.com/v1/messages', [
+                'model' => $model,
+                'messages' => [
+                    ['role' => 'user', 'content' => $prompt]
+                ],
+                'temperature' => $temperature,
+                'max_tokens' => $maxTokens,
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return [
+                    'error' => false,
+                    'text' => $data['content'][0]['text'],
+                    'model' => $model,
+                    'provider' => 'anthropic',
+                    'raw_response' => $data,
+                ];
+            } else {
+                Log::error('Anthropic API error', [
+                    'status' => $response->status(),
+                    'response' => $response->json(),
+                ]);
+
+                return [
+                    'error' => true,
+                    'message' => 'Anthropic API error: ' . ($response->json()['error']['message'] ?? 'Unknown error'),
+                    'status' => $response->status(),
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('Anthropic API exception', [
+                'exception' => $e->getMessage(),
+            ]);
+
+            return [
+                'error' => true,
+                'message' => 'Anthropic API exception: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Call Google AI API (Gemini)
+     */
+    protected function callGoogle(string $apiKey, string $model, string $prompt, float $temperature, int $maxTokens)
+    {
+        try {
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+            ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
+                'contents' => [
+                    ['parts' => [['text' => $prompt]]]
+                ],
+                'generation_config' => [
+                    'temperature' => $temperature,
+                    'maxOutputTokens' => $maxTokens,
+                ],
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return [
+                    'error' => false,
+                    'text' => $data['candidates'][0]['content']['parts'][0]['text'],
+                    'model' => $model,
+                    'provider' => 'google',
+                    'raw_response' => $data,
+                ];
+            } else {
+                Log::error('Google AI API error', [
+                    'status' => $response->status(),
+                    'response' => $response->json(),
+                ]);
+
+                return [
+                    'error' => true,
+                    'message' => 'Google AI API error: ' . ($response->json()['error']['message'] ?? 'Unknown error'),
+                    'status' => $response->status(),
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('Google AI API exception', [
+                'exception' => $e->getMessage(),
+            ]);
+
+            return [
+                'error' => true,
+                'message' => 'Google AI API exception: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Call Ollama API (local LLMs)
+     */
+    protected function callOllama(string $apiKey, string $model, string $prompt, float $temperature, int $maxTokens)
+    {
+        try {
+            // For Ollama, the API key might actually be the base URL
+            $baseUrl = $apiKey;
+            if (!str_starts_with($baseUrl, 'http')) {
+                $baseUrl = 'http://' . $baseUrl;
+            }
+
+            $response = Http::post("{$baseUrl}/api/generate", [
+                'model' => $model,
+                'prompt' => $prompt,
+                'temperature' => $temperature,
+                'num_predict' => $maxTokens,
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return [
+                    'error' => false,
+                    'text' => $data['response'],
+                    'model' => $model,
+                    'provider' => 'ollama',
+                    'raw_response' => $data,
+                ];
+            } else {
+                Log::error('Ollama API error', [
+                    'status' => $response->status(),
+                    'response' => $response->json(),
+                ]);
+
+                return [
+                    'error' => true,
+                    'message' => 'Ollama API error: ' . ($response->json()['error'] ?? 'Unknown error'),
+                    'status' => $response->status(),
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('Ollama API exception', [
+                'exception' => $e->getMessage(),
+            ]);
+
+            return [
+                'error' => true,
+                'message' => 'Ollama API exception: ' . $e->getMessage(),
+            ];
+        }
+    }
+}
+
+
+
+
+Dateiname: app\Services\PromptService.php
+<?php
+
+
+namespace App\Services;
+
+use App\Models\Prompt;
+use App\Models\PromptVersion;
+use Illuminate\Support\Facades\DB;
+
+class PromptService
+{
+    /**
+     * Create a new prompt with its first version
+     */
+    public function createPrompt(array $data, int $userId)
+    {
+        return DB::transaction(function () use ($data, $userId) {
+            // Create the prompt
+            $prompt = Prompt::create([
+                'user_id' => $userId,
+                'title' => $data['title'],
+                'description' => $data['description'] ?? null,
+                'tags' => $data['tags'] ?? [],
+            ]);
+
+            // Create the first version
+            $promptVersion = new PromptVersion();
+            $promptVersion->prompt_id = $prompt->id;
+            $promptVersion->content = $data['content'];
+            $promptVersion->version = 1;
+            $promptVersion->is_current = true;
+            $promptVersion->extractVariablesFromContent();
+            $promptVersion->save();
+
+            return $prompt;
+        });
+    }
+
+    /**
+     * Update a prompt and create a new version if content changed
+     */
+    public function updatePrompt(Prompt $prompt, array $data)
+    {
+        return DB::transaction(function () use ($prompt, $data) {
+            // Update the prompt
+            $prompt->update([
+                'title' => $data['title'],
+                'description' => $data['description'] ?? $prompt->description,
+                'tags' => $data['tags'] ?? $prompt->tags,
+            ]);
+
+            // Get current version
+            $currentVersion = $prompt->currentVersion();
+
+            // Only create a new version if content has changed
+            if (isset($data['content']) && $currentVersion && $currentVersion->content !== $data['content']) {
+                // Mark old version as not current
+                $currentVersion->update(['is_current' => false]);
+
+                // Create new version
+                $promptVersion = new PromptVersion();
+                $promptVersion->prompt_id = $prompt->id;
+                $promptVersion->content = $data['content'];
+                $promptVersion->version = $currentVersion->version + 1;
+                $promptVersion->is_current = true;
+                $promptVersion->extractVariablesFromContent();
+                $promptVersion->save();
+            }
+
+            return $prompt;
+        });
+    }
+
+    /**
+     * Set a specific version as the current one
+     */
+    public function setCurrentVersion(Prompt $prompt, PromptVersion $version)
+    {
+        return DB::transaction(function () use ($prompt, $version) {
+            // Ensure the version belongs to this prompt
+            if ($version->prompt_id !== $prompt->id) {
+                throw new \Exception('Version does not belong to this prompt');
+            }
+
+            // Update all versions to not be current
+            $prompt->versions()->update(['is_current' => false]);
+
+            // Set this version as current
+            $version->update(['is_current' => true]);
+
+            return $prompt;
+        });
+    }
+
+    /**
+     * Generate a prompt template from a description using AI
+     */
+    public function generatePromptTemplate(string $description, string $provider = 'openai')
+    {
+        $aiService = app(AiService::class);
+
+        $systemPrompt = "You are an expert at writing effective AI prompts. Create a prompt template based on the following description. Include variables in {{variable_name}} format where appropriate.";
+
+        $response = $aiService->generateCompletion(
+            $provider,
+            'gpt-4', // Using a capable model for prompt generation
+            $systemPrompt . "\n\nDescription: " . $description,
+            0.7,
+            2000
+        );
+
+        if ($response['error']) {
+            throw new \Exception("Failed to generate prompt template: " . $response['message']);
+        }
+
+        return $response['text'];
+    }
+
+    /**
+     * Optimize a prompt using AI suggestions
+     */
+    public function optimizePrompt(string $content, string $provider = 'openai')
+    {
+        $aiService = app(AiService::class);
+
+        $systemPrompt = "You are an expert at optimizing AI prompts. Analyze the following prompt and suggest improvements to make it more effective. Keep variables in {{variable_name}} format.";
+
+        $response = $aiService->generateCompletion(
+            $provider,
+            'gpt-4', // Using a capable model for prompt optimization
+            $systemPrompt . "\n\nPrompt to optimize: " . $content,
+            0.7,
+            2000
+        );
+
+        if ($response['error']) {
+            throw new \Exception("Failed to optimize prompt: " . $response['message']);
+        }
+
+        return $response['text'];
+    }
+}
+
+
+
+Dateiname: app\Services\WorkflowExecutionService.php
+<?php
+
+namespace App\Services;
+
+use App\Models\ExecutionLog;
+use App\Models\Workflow;
+use App\Models\Prompt;
+use App\Services\AiService;
+use Illuminate\Support\Facades\Log;
+
+class WorkflowExecutionService
+{
+    protected $aiService;
+
+    public function __construct(AiService $aiService)
+    {
+        $this->aiService = $aiService;
+    }
+
+    /**
+     * Execute a workflow based on an execution log
+     */
+    public function execute(ExecutionLog $executionLog)
+    {
+        try {
+            // Update log status
+            $executionLog->update([
+                'status' => 'running',
+            ]);
+
+            // Get the workflow
+            $workflow = $executionLog->workflow;
+
+            // Prepare variables storage
+            $variables = $executionLog->input_data ?? [];
+
+            // Get starting nodes (nodes without incoming edges)
+            $startingNodes = $this->getStartingNodes($workflow);
+
+            // Execute the workflow
+            $nodeResults = [];
+            foreach ($startingNodes as $nodeId) {
+                $this->executeNode($nodeId, $workflow, $variables, $nodeResults);
+            }
+
+            // Update log with results
+            $executionLog->update([
+                'status' => 'completed',
+                'node_results' => $nodeResults,
+                'output_data' => $variables, // Store final variables
+                'completed_at' => now(),
+            ]);
+
+            return [
+                'success' => true,
+                'variables' => $variables,
+                'node_results' => $nodeResults,
+            ];
+        } catch (\Exception $e) {
+            Log::error('Workflow execution error', [
+                'workflow_id' => $executionLog->workflow_id,
+                'execution_id' => $executionLog->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            // Update log with error
+            $executionLog->update([
+                'status' => 'failed',
+                'error' => $e->getMessage(),
+                'completed_at' => now(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Get starting nodes (nodes without incoming edges)
+     */
+    protected function getStartingNodes(Workflow $workflow)
+    {
+        $nodes = collect($workflow->nodes);
+        $edges = collect($workflow->edges);
+
+        // Get all target nodes (nodes that have incoming edges)
+        $targetNodeIds = $edges->pluck('target')->unique()->toArray();
+
+        // Starting nodes are nodes that don't have incoming edges
+        return $nodes->pluck('id')->filter(function ($nodeId) use ($targetNodeIds) {
+            return !in_array($nodeId, $targetNodeIds);
+        })->toArray();
+    }
+
+    /**
+     * Get next nodes (nodes connected by outgoing edges)
+     */
+    protected function getNextNodes(string $nodeId, Workflow $workflow)
+    {
+        $edges = collect($workflow->edges);
+
+        // Get all edges where this node is the source
+        $outgoingEdges = $edges->filter(function ($edge) use ($nodeId) {
+            return $edge['source'] === $nodeId;
+        });
+
+        // Return the target nodes
+        return $outgoingEdges->pluck('target')->toArray();
+    }
+
+    /**
+     * Execute a node in the workflow
+     */
+    protected function executeNode(string $nodeId, Workflow $workflow, array &$variables, array &$nodeResults)
+    {
+        // Find the node
+        $node = collect($workflow->nodes)->firstWhere('id', $nodeId);
+
+        if (!$node) {
+            throw new \Exception("Node not found: {$nodeId}");
+        }
+
+        // Skip if already executed
+        if (isset($nodeResults[$nodeId])) {
+            return $nodeResults[$nodeId];
+        }
+
+        // Process the node based on its type
+        $result = match($node['type']) {
+            'prompt' => $this->executePromptNode($node, $variables),
+            'condition' => $this->executeConditionNode($node, $variables, $workflow, $nodeResults),
+            'input' => $this->executeInputNode($node, $variables),
+            'output' => $this->executeOutputNode($node, $variables),
+            'api' => $this->executeApiNode($node, $variables),
+            'transform' => $this->executeTransformNode($node, $variables),
+            default => throw new \Exception("Unsupported node type: {$node['type']}"),
+        };
+
+        // Store the result
+        $nodeResults[$nodeId] = $result;
+
+        // Process next nodes (if not a condition node, which handles its own flow)
+        if ($node['type'] !== 'condition') {
+            $nextNodes = $this->getNextNodes($nodeId, $workflow);
+            foreach ($nextNodes as $nextNodeId) {
+                $this->executeNode($nextNodeId, $workflow, $variables, $nodeResults);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Execute a prompt node
+     */
+    protected function executePromptNode(array $node, array &$variables)
+    {
+        $data = $node['data'] ?? [];
+
+        // If this is a reference to a saved prompt
+        if (isset($data['prompt_id'])) {
+            $prompt = Prompt::findOrFail($data['prompt_id']);
+            $promptVersion = $prompt->currentVersion();
+            $content = $promptVersion->content;
+        } else {
+            $content = $data['content'] ?? '';
+        }
+
+        // Replace variables in content
+        foreach ($variables as $key => $value) {
+            if (is_string($value)) {
+                $content = str_replace("{{" . $key . "}}", $value, $content);
+            }
+        }
+
+        // Get AI provider settings
+        $provider = $data['provider'] ?? 'openai';
+        $model = $data['model'] ?? 'gpt-4';
+        $temperature = $data['temperature'] ?? 0.7;
+        $maxTokens = $data['max_tokens'] ?? 2000;
+
+        // Call AI service
+        $aiResponse = $this->aiService->generateCompletion(
+            $provider,
+            $model,
+            $content,
+            $temperature,
+            $maxTokens
+        );
+
+        if ($aiResponse['error']) {
+            throw new \Exception("AI service error: " . $aiResponse['message']);
+        }
+
+        // Store result in variables
+        $outputVariable = $data['output_variable'] ?? 'result';
+        $variables[$outputVariable] = $aiResponse['text'];
+
+        return [
+            'success' => true,
+            'output' => $aiResponse['text'],
+            'output_variable' => $outputVariable,
+        ];
+    }
+
+    /**
+     * Execute a condition node
+     */
+    protected function executeConditionNode(array $node, array &$variables, Workflow $workflow, array &$nodeResults)
+    {
+        $data = $node['data'] ?? [];
+        $condition = $data['condition'] ?? '';
+
+        // Replace variables in condition
+        foreach ($variables as $key => $value) {
+            if (is_string($value)) {
+                $condition = str_replace("{{" . $key . "}}", "'" . addslashes($value) . "'", $condition);
+            }
+        }
+
+        // Evaluate condition safely
+        $conditionMet = false;
+        try {
+            // Use eval cautiously - this should be replaced with a safer parser
+            $conditionMet = eval("return {$condition};");
+        } catch (\Throwable $e) {
+            throw new \Exception("Condition evaluation error: " . $e->getMessage());
+        }
+
+        // Get true and false paths
+        $truePath = $data['true_path'] ?? null;
+        $falsePath = $data['false_path'] ?? null;
+
+        // Follow the appropriate path
+        if ($conditionMet && $truePath) {
+            $this->executeNode($truePath, $workflow, $variables, $nodeResults);
+        } elseif (!$conditionMet && $falsePath) {
+            $this->executeNode($falsePath, $workflow, $variables, $nodeResults);
+        }
+
+        return [
+            'success' => true,
+            'condition' => $condition,
+            'condition_met' => $conditionMet,
+            'path_taken' => $conditionMet ? 'true' : 'false',
+        ];
+    }
+
+    /**
+     * Execute an input node
+     */
+    protected function executeInputNode(array $node, array &$variables)
+    {
+        $data = $node['data'] ?? [];
+        $inputVariable = $data['variable'] ?? '';
+
+        // Input nodes just pass through already set variables
+        // or set default values if provided
+        if (!isset($variables[$inputVariable]) && isset($data['default_value'])) {
+            $variables[$inputVariable] = $data['default_value'];
+        }
+
+        return [
+            'success' => true,
+            'variable' => $inputVariable,
+            'value' => $variables[$inputVariable] ?? null,
+        ];
+    }
+
+    /**
+     * Execute an output node
+     */
+    protected function executeOutputNode(array $node, array &$variables)
+    {
+        $data = $node['data'] ?? [];
+        $outputVariables = $data['variables'] ?? [];
+
+        $output = [];
+        foreach ($outputVariables as $variable) {
+            $output[$variable] = $variables[$variable] ?? null;
+        }
+
+        return [
+            'success' => true,
+            'output' => $output,
+        ];
+    }
+
+    /**
+     * Execute an API node
+     */
+    protected function executeApiNode(array $node, array &$variables)
+    {
+        $data = $node['data'] ?? [];
+        $url = $data['url'] ?? '';
+        $method = $data['method'] ?? 'GET';
+        $headers = $data['headers'] ?? [];
+        $body = $data['body'] ?? null;
+
+        // Replace variables in URL, headers and body
+        foreach ($variables as $key => $value) {
+            if (is_string($value)) {
+                $url = str_replace("{{" . $key . "}}", urlencode($value), $url);
+
+                // Replace in headers
+                foreach ($headers as $headerKey => $headerValue) {
+                    $headers[$headerKey] = str_replace("{{" . $key . "}}", $value, $headerValue);
+                }
+
+                // Replace in body if it's a string
+                if (is_string($body)) {
+                    $body = str_replace("{{" . $key . "}}", $value, $body);
+                }
+            }
+        }
+
+        // Make API call
+        try {
+            $request = Http::withHeaders($headers);
+
+            $response = match(strtoupper($method)) {
+                'GET' => $request->get($url),
+                'POST' => $request->post($url, $body),
+                'PUT' => $request->put($url, $body),
+                'PATCH' => $request->patch($url, $body),
+                'DELETE' => $request->delete($url, $body),
+                default => throw new \Exception("Unsupported HTTP method: {$method}"),
+            };
+
+            // Store result in variables
+            $outputVariable = $data['output_variable'] ?? 'api_result';
+            $variables[$outputVariable] = $response->json() ?: $response->body();
+
+            return [
+                'success' => true,
+                'status_code' => $response->status(),
+                'response' => $variables[$outputVariable],
+                'output_variable' => $outputVariable,
+            ];
+        } catch (\Exception $e) {
+            throw new \Exception("API call error: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Execute a transform node
+     */
+    protected function executeTransformNode(array $node, array &$variables)
+    {
+        $data = $node['data'] ?? [];
+        $inputVariable = $data['input_variable'] ?? '';
+        $outputVariable = $data['output_variable'] ?? '';
+        $transformation = $data['transformation'] ?? '';
+
+        if (!isset($variables[$inputVariable])) {
+            throw new \Exception("Input variable not found: {$inputVariable}");
+        }
+
+        $input = $variables[$inputVariable];
+
+        // Apply transformation
+        $output = match($transformation) {
+            'json_parse' => $this->transformJsonParse($input),
+            'json_stringify' => $this->transformJsonStringify($input),
+            'to_uppercase' => $this->transformToUppercase($input),
+            'to_lowercase' => $this->transformToLowercase($input),
+            'trim' => $this->transformTrim($input),
+            'extract_text' => $this->transformExtractText($input, $data['regex'] ?? null),
+            'custom_code' => $this->transformCustomCode($input, $data['code'] ?? null),
+            default => throw new \Exception("Unsupported transformation: {$transformation}"),
+        };
+
+        // Store result in variables
+        $variables[$outputVariable] = $output;
+
+        return [
+            'success' => true,
+            'input_variable' => $inputVariable,
+            'output_variable' => $outputVariable,
+            'transformation' => $transformation,
+        ];
+    }
+
+    // Transformation methods
+
+    private function transformJsonParse($input)
+    {
+        if (!is_string($input)) {
+            throw new \Exception("Input must be a string for JSON parsing");
+        }
+
+        return json_decode($input, true);
+    }
+
+    private function transformJsonStringify($input)
+    {
+        return json_encode($input);
+    }
+
+    private function transformToUppercase($input)
+    {
+        if (!is_string($input)) {
+            throw new \Exception("Input must be a string for uppercase transformation");
+        }
+
+        return strtoupper($input);
+    }
+
+    private function transformToLowercase($input)
+    {
+        if (!is_string($input)) {
+            throw new \Exception("Input must be a string for lowercase transformation");
+        }
+
+        return strtolower($input);
+    }
+
+    private function transformTrim($input)
+    {
+        if (!is_string($input)) {
+            throw new \Exception("Input must be a string for trim transformation");
+        }
+
+        return trim($input);
+    }
+
+    private function transformExtractText($input, $regex)
+    {
+        if (!is_string($input)) {
+            throw new \Exception("Input must be a string for text extraction");
+        }
+
+        if (!$regex) {
+            throw new \Exception("Regex pattern is required for text extraction");
+        }
+
+        preg_match($regex, $input, $matches);
+
+        return $matches[1] ?? '';
+    }
+
+    private function transformCustomCode($input, $code)
+    {
+        if (!$code) {
+            throw new \Exception("Custom code is required for custom transformation");
+        }
+
+        // Define a function with the custom code
+        $function = function ($input) use ($code) {
+            // Use eval cautiously - this should be replaced with a safer approach
+            return eval($code);
+        };
+
+        // Execute the function with the input
+        try {
+            return $function($input);
+        } catch (\Throwable $e) {
+            throw new \Exception("Custom code execution error: " . $e->getMessage());
+        }
+    }
+}
+
+
+
+
