@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -43,8 +44,8 @@ class Prompt extends Model
         return $this->hasMany(PromptVersion::class);
     }
 
-    public function currentVersion()
+    public function currentVersion(): HasOne
     {
-        return $this->versions()->where('is_current', true)->first();
+        return $this->hasOne(PromptVersion::class)->where('is_current', true);
     }
 }

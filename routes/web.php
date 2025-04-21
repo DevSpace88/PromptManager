@@ -255,9 +255,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // Catch-all route for SPA
-Route::get('/{any}', function () {
-    return Inertia::render('NotFound');
-})->where('any', '.*')->middleware(['auth']);
+//Route::get('/{any}', function () {
+//    return Inertia::render('NotFound');
+//})->where('any', '.*')->middleware(['auth']);
 
 /*
 |--------------------------------------------------------------------------
