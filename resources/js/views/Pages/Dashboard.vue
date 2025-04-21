@@ -354,10 +354,10 @@ const formatDate = (dateString) => {
 // Get status class for execution status
 const getStatusClass = (status) => {
   switch(status) {
-    case 'completed': return 'bg-success';
-    case 'failed': return 'bg-danger';
-    case 'running': return 'bg-warning';
-    case 'pending': return 'bg-info';
+    case 'completed': return 'bg-success-light text-success';
+    case 'failed': return 'bg-danger-light text-danger';
+    case 'running': return 'bg-warning-light text-warning';
+    case 'pending': return 'bg-info-light text-info';
     default: return 'bg-secondary';
   }
 };
@@ -466,7 +466,7 @@ const getStatusClass = (status) => {
                 <div class="fs-sm text-muted">{{ formatDate(execution.created_at) }}</div>
               </div>
               <span
-                class="fs-xs fw-semibold d-inline-block text-white py-1 px-3 rounded-pill"
+                class="fw-semibold d-inline-block py-1 px-3 rounded-pill fs-sm"
                 :class="getStatusClass(execution.status)"
               >
                 {{ execution.status }}
