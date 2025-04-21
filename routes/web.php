@@ -233,8 +233,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('workflows.execute');
     Route::get('/executions/{executionLog}/status', [WorkflowController::class, 'getExecutionStatus'])
         ->name('executions.status');
-    Route::post('/workflows/export/{workflow}', [WorkflowController::class, 'exportWorkflow'])
+    Route::get('/workflows/export/{workflow}', [WorkflowController::class, 'exportWorkflow'])
         ->name('workflows.export');
+    Route::get('/workflows/download/{workflow}', [WorkflowController::class, 'downloadWorkflow'])
+        ->name('workflows.download');
     Route::post('/workflows/import', [WorkflowController::class, 'importWorkflow'])
         ->name('workflows.import');
     Route::resource('workflows', WorkflowController::class);

@@ -127,7 +127,8 @@ const showCodeField = computed(() => props.data.transformation === 'custom_code'
 
     <!-- Node Content -->
     <div class="transform-node-content">
-      <div class="transform-node-header">
+      <div class="transform-node-header node-drag-handle
+">
         <i class="fa fa-exchange-alt text-secondary me-1"></i>
         <span class="transform-node-label">{{ data.label }}</span>
         <button

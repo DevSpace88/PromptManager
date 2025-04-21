@@ -126,7 +126,7 @@ const removeVariable = (variable) => {
 
     <!-- Node Content -->
     <div class="output-node-content">
-      <div class="output-node-header">
+      <div class="output-node-header node-drag-handle">
         <i class="fa fa-sign-out-alt text-success me-1"></i>
         <span class="output-node-label">{{ data.label }}</span>
         <button

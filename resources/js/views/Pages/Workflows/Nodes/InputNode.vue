@@ -65,7 +65,8 @@ const updateNodeData = (key, value) => {
 
     <!-- Node Content -->
     <div class="input-node-content">
-      <div class="input-node-header">
+      <div class="input-node-header node-drag-handle
+">
         <i class="fa fa-sign-in-alt text-info me-1"></i>
         <span class="input-node-label">{{ data.label }}</span>
         <button

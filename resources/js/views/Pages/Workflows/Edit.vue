@@ -631,6 +631,20 @@ const isValid = computed(() => {
 
               <!-- Workflow Canvas -->
               <div style="margin-left: 260px; height: 100%">
+<!--                <VueFlow-->
+<!--                  v-model:nodes="flowNodes"-->
+<!--                  v-model:edges="flowEdges"-->
+<!--                  :nodeTypes="nodeTypes"-->
+<!--                  :default-zoom="1.5"-->
+<!--                  :min-zoom="0.2"-->
+<!--                  :max-zoom="4"-->
+<!--                  @nodesChange="onNodesChange"-->
+<!--                  @edgesChange="onEdgesChange"-->
+<!--                  @connect="onConnect"-->
+<!--                  @keydown="handleKeyDown"-->
+<!--                  :deleteKeyCode="['Backspace', 'Delete']"-->
+<!--                  class="workflow-canvas"-->
+<!--                >-->
                 <VueFlow
                   v-model:nodes="flowNodes"
                   v-model:edges="flowEdges"
@@ -643,6 +657,7 @@ const isValid = computed(() => {
                   @connect="onConnect"
                   @keydown="handleKeyDown"
                   :deleteKeyCode="['Backspace', 'Delete']"
+                  :nodeDraggable="false"
                   class="workflow-canvas"
                 >
                   <Background pattern-color="#aaa" gap="24" />

@@ -7,6 +7,7 @@ use App\Models\ExecutionLog;
 use App\Jobs\ExecuteWorkflowJob;
 use App\Services\WorkflowExecutionService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 
@@ -19,14 +20,32 @@ class WorkflowController extends Controller
         $this->workflowService = $workflowService;
     }
 
+//    public function index()
+//    {
+//        $workflows = Workflow::where('user_id', Auth::id())
+//            ->orderBy('updated_at', 'desc')
+//            ->get();
+//
+//        return Inertia::render('Pages/Workflows/Index', [
+//            'workflows' => $workflows
+//        ]);
+//    }
+
     public function index()
     {
         $workflows = Workflow::where('user_id', Auth::id())
             ->orderBy('updated_at', 'desc')
             ->get();
 
+        $recentExecutions = ExecutionLog::with('workflow')
+            ->where('user_id', Auth::id())
+            ->latest()
+            ->take(5)
+            ->get();
+
         return Inertia::render('Pages/Workflows/Index', [
-            'workflows' => $workflows
+            'workflows' => $workflows,
+            'recentExecutions' => $recentExecutions
         ]);
     }
 
@@ -175,6 +194,53 @@ class WorkflowController extends Controller
         ]);
     }
 
+//    public function exportWorkflow(Workflow $workflow)
+//    {
+//        if ($workflow->user_id !== Auth::id()) {
+//            abort(403);
+//        }
+//
+//        $exportData = [
+//            'name' => $workflow->name,
+//            'description' => $workflow->description,
+//            'nodes' => $workflow->nodes,
+//            'edges' => $workflow->edges,
+//            'settings' => $workflow->settings,
+//            'created_at' => $workflow->created_at,
+//            'updated_at' => $workflow->updated_at,
+//        ];
+//
+//        return response()->json($exportData);
+//    }
+
+//    public function exportWorkflow(Workflow $workflow)
+//    {
+//        if ($workflow->user_id !== Auth::id()) {
+//            abort(403);
+//        }
+//
+//        $exportData = [
+//            'name' => $workflow->name,
+//            'description' => $workflow->description,
+//            'nodes' => $workflow->nodes,
+//            'edges' => $workflow->edges,
+//            'settings' => $workflow->settings,
+//            'created_at' => $workflow->created_at,
+//            'updated_at' => $workflow->updated_at,
+//        ];
+//
+//        // JSON erstellen (mit formatierter Ausgabe für bessere Lesbarkeit)
+//        $jsonData = json_encode($exportData, JSON_PRETTY_PRINT);
+//
+//        // Generiere einen sauberen Dateinamen basierend auf dem Workflow-Namen
+//        $filename = Str::slug($workflow->name) . '-export.json';
+//
+//        // Zurückgeben als Download-Datei anstatt als JSON-Antwort
+//        return response($jsonData)
+//            ->header('Content-Type', 'application/json')
+//            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+//    }
+
     public function exportWorkflow(Workflow $workflow)
     {
         if ($workflow->user_id !== Auth::id()) {
@@ -191,7 +257,48 @@ class WorkflowController extends Controller
             'updated_at' => $workflow->updated_at,
         ];
 
-        return response()->json($exportData);
+        // JSON erstellen (mit formatierter Ausgabe für bessere Lesbarkeit)
+        $jsonData = json_encode($exportData, JSON_PRETTY_PRINT);
+
+        // Generiere einen sauberen Dateinamen basierend auf dem Workflow-Namen
+//        $filename = Str::slug($workflow->name) . '-export.json';
+        $filename = strtolower(str_replace(' ', '-', $workflow->name)) . '-export.json';
+
+
+        // Zurückgeben als Download-Datei anstatt als JSON-Antwort
+        return response($jsonData)
+            ->header('Content-Type', 'application/json')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
+
+    // In WorkflowController.php:
+    public function downloadWorkflow(Workflow $workflow)
+    {
+        if ($workflow->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $exportData = [
+            'name' => $workflow->name,
+            'description' => $workflow->description,
+            'nodes' => $workflow->nodes,
+            'edges' => $workflow->edges,
+            'settings' => $workflow->settings,
+            'created_at' => $workflow->created_at,
+            'updated_at' => $workflow->updated_at,
+        ];
+
+        // JSON erstellen
+        $jsonData = json_encode($exportData, JSON_PRETTY_PRINT);
+
+        // Dateiname erstellen
+        $filename = preg_replace('/[^a-z0-9]+/', '-', strtolower($workflow->name)) . '-export.json';
+
+        return response($jsonData, 200, [
+            'Content-Type' => 'application/json',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'X-Inertia-Location' => null, // Verhindert Inertia-Navigation
+        ]);
     }
 
     public function importWorkflow(Request $request)

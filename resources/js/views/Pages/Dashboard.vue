@@ -466,7 +466,7 @@ const getStatusClass = (status) => {
                 <div class="fs-sm text-muted">{{ formatDate(execution.created_at) }}</div>
               </div>
               <span
-                class="fs-xs fw-semibold d-inline-block py-1 px-3 rounded-pill"
+                class="fs-xs fw-semibold d-inline-block text-white py-1 px-3 rounded-pill"
                 :class="getStatusClass(execution.status)"
               >
                 {{ execution.status }}

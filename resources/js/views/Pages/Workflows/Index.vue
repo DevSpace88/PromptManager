@@ -739,7 +739,7 @@ onMounted(() => {
                   <div class="fs-sm text-muted">{{ formatDate(execution.started_at) }}</div>
                 </div>
                 <span
-                  class="fs-xs fw-semibold d-inline-block py-1 px-3 rounded-pill"
+                  class="fs-xs fw-semibold d-inline-block py-1 px-3 text-white rounded-pill"
                   :class="getStatusClass(execution.status)"
                 >
                   {{ execution.status }}
@@ -791,7 +791,7 @@ onMounted(() => {
             </div>
           </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-6 pb-4">
           <h4 class="h5 fw-medium">Import Workflow</h4>
           <p class="text-muted fs-sm">Import workflows from JSON files to quickly set up your automations.</p>
           <form @submit.prevent="importWorkflow">

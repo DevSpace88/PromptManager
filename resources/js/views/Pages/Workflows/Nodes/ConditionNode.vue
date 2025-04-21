@@ -153,7 +153,8 @@ const applyExample = (example) => {
 
     <!-- Node Content -->
     <div class="condition-node-content">
-      <div class="condition-node-header">
+      <div class="condition-node-header node-drag-handle
+">
         <i class="fa fa-code-branch text-warning me-1"></i>
         <span class="condition-node-label">{{ data.label }}</span>
         <button
