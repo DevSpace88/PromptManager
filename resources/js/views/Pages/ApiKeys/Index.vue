@@ -201,9 +201,9 @@ onMounted(() => {
     </div>
 
     <!-- API Configuration Guides -->
-    <BaseBlock title="API Configuration Guides">
+    <BaseBlock title="API Configuration Guides" class="my-4">
       <div class="row items-push">
-        <div class="col-md-6 col-xl-3">
+        <div class="col-md-6 col-xl-3 py-4">
           <div class="d-flex">
             <div class="flex-shrink-0 me-3">
               <div class="item item-rounded bg-body">
@@ -221,7 +221,7 @@ onMounted(() => {
             </div>
           </div>
         </div>
-        <div class="col-md-6 col-xl-3">
+        <div class="col-md-6 col-xl-3 py-4 ">
           <div class="d-flex">
             <div class="flex-shrink-0 me-3">
               <div class="item item-rounded bg-body">
@@ -239,7 +239,7 @@ onMounted(() => {
             </div>
           </div>
         </div>
-        <div class="col-md-6 col-xl-3">
+        <div class="col-md-6 col-xl-3 py-4">
           <div class="d-flex">
             <div class="flex-shrink-0 me-3">
               <div class="item item-rounded bg-body">
@@ -257,7 +257,7 @@ onMounted(() => {
             </div>
           </div>
         </div>
-        <div class="col-md-6 col-xl-3">
+        <div class="col-md-6 col-xl-3 py-4">
           <div class="d-flex">
             <div class="flex-shrink-0 me-3">
               <div class="item item-rounded bg-body">
@@ -279,7 +279,7 @@ onMounted(() => {
     </BaseBlock>
 
     <!-- Security Notice -->
-    <BaseBlock title="Security Information" content-class="bg-body-light">
+    <BaseBlock title="Security Information" content-class="bg-body-light pb-4">
       <div class="d-flex">
         <div class="flex-shrink-0 me-3">
           <i class="fa fa-shield-alt fa-2x text-muted"></i>
