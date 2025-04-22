@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Prompt;
 use App\Models\Workflow;
 use App\Models\ExecutionLog;
 use App\Jobs\ExecuteWorkflowJob;
@@ -49,9 +50,28 @@ class WorkflowController extends Controller
         ]);
     }
 
+//    public function create()
+//    {
+//        return Inertia::render('Pages/Workflows/Create');
+//    }
+
     public function create()
     {
-        return Inertia::render('Pages/Workflows/Create');
+        // Lade alle Prompts für diesen Benutzer
+        $prompts = Prompt::with('currentVersion')
+            ->where('user_id', Auth::id())
+            ->get()
+            ->map(function ($prompt) {
+                return [
+                    'id' => $prompt->id,
+                    'name' => $prompt->title,
+                    'content' => $prompt->currentVersion ? $prompt->currentVersion->content : ''
+                ];
+            });
+
+        return Inertia::render('Pages/Workflows/Create', [
+            'prompts' => $prompts
+        ]);
     }
 
     public function store(Request $request)
@@ -95,14 +115,37 @@ class WorkflowController extends Controller
         ]);
     }
 
+//    public function edit(Workflow $workflow)
+//    {
+//        if ($workflow->user_id !== Auth::id()) {
+//            abort(403);
+//        }
+//
+//        return Inertia::render('Pages/Workflows/Edit', [
+//            'workflow' => $workflow,
+//        ]);
+//    }
     public function edit(Workflow $workflow)
     {
         if ($workflow->user_id !== Auth::id()) {
             abort(403);
         }
 
+        // Lade alle Prompts für diesen Benutzer
+        $prompts = Prompt::with('currentVersion')
+            ->where('user_id', Auth::id())
+            ->get()
+            ->map(function ($prompt) {
+                return [
+                    'id' => $prompt->id,
+                    'name' => $prompt->title,
+                    'content' => $prompt->currentVersion ? $prompt->currentVersion->content : ''
+                ];
+            });
+
         return Inertia::render('Pages/Workflows/Edit', [
             'workflow' => $workflow,
+            'prompts' => $prompts
         ]);
     }
 
