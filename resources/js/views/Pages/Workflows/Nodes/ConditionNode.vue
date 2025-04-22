@@ -133,20 +133,39 @@ const applyExample = (example) => {
       :connectable="isConnectable"
     />
 
-    <!-- Source Handle (True output) -->
+<!--    &lt;!&ndash; Source Handle (True output) &ndash;&gt;-->
+<!--    <Handle-->
+<!--      type="source"-->
+<!--      position="bottom"-->
+<!--      :id="id + '-source-true'"-->
+<!--      :connectable="isConnectable"-->
+<!--      class="source-true"-->
+<!--    />-->
+
+<!--    &lt;!&ndash; Source Handle (False output) &ndash;&gt;-->
+<!--    <Handle-->
+<!--      type="source"-->
+<!--      position="right"-->
+<!--      :id="id + '-source-false'"-->
+<!--      :connectable="isConnectable"-->
+<!--      class="source-false"-->
+<!--    />-->
+
+    <!-- Im ConditionNode Template -->
+    <!-- True (unten) Handle -->
     <Handle
       type="source"
       position="bottom"
-      :id="id + '-source-true'"
+      :id="`${id}-source-true`"
       :connectable="isConnectable"
       class="source-true"
     />
 
-    <!-- Source Handle (False output) -->
+    <!-- False (rechts) Handle -->
     <Handle
       type="source"
       position="right"
-      :id="id + '-source-false'"
+      :id="`${id}-source-false`"
       :connectable="isConnectable"
       class="source-false"
     />

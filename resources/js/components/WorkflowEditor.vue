@@ -180,16 +180,37 @@ const addTransformNode = () => {
 };
 
 // Handle connection between nodes
+// const onConnect = (params) => {
+//   const newEdge = {
+//     id: `edge-${uuidv4()}`,
+//     source: params.source,
+//     target: params.target,
+//     animated: true
+//   };
+//
+//   updateEdges([...flowEdges.value, newEdge]);
+// };
+
+// In WorkflowEditor.vue - onConnect-Funktion anpassen
 const onConnect = (params) => {
+  console.log('Connection params:', params); // Debug-Info
+
   const newEdge = {
     id: `edge-${uuidv4()}`,
     source: params.source,
+    sourceHandle: params.sourceHandle, // Wichtig für Condition Nodes!
     target: params.target,
-    animated: true
+    targetHandle: params.targetHandle,
+    animated: true,
+    // Zusätzliche Daten für Conditions
+    data: {
+      condition: params.sourceHandle?.includes('true') ? 'true' : 'false'
+    }
   };
 
   updateEdges([...flowEdges.value, newEdge]);
 };
+
 
 // Track changes to nodes and edges
 const onNodesChange = (changes) => {
@@ -273,8 +294,20 @@ const initializeWorkflow = () => {
     updateNodes(initialNodes);
   }
 
+  // if (props.initialEdges && props.initialEdges.length > 0) {
+  //   updateEdges(props.initialEdges);
+  // }
+  // In der initializeWorkflow-Funktion
   if (props.initialEdges && props.initialEdges.length > 0) {
-    updateEdges(props.initialEdges);
+    // Erweitere die bestehenden Kanten um fehlende Eigenschaften
+    const enhancedEdges = props.initialEdges.map(edge => ({
+      ...edge,
+      animated: true,
+      // Stelle sicher, dass sourceHandle und targetHandle existieren
+      sourceHandle: edge.sourceHandle || null,
+      targetHandle: edge.targetHandle || null
+    }));
+    updateEdges(enhancedEdges);
   }
 
   initialNodesCreated.value = true;
@@ -690,6 +723,17 @@ onUnmounted(() => {
 .workflow-canvas :deep(.vue-flow__handle) {
   width: 8px;
   height: 8px;
+}
+
+.workflow-canvas :deep(.vue-flow__edge.animated .vue-flow__edge-path) {
+  stroke-dasharray: 5;
+  animation: dashdraw 0.5s linear infinite;
+}
+
+@keyframes dashdraw {
+  from {
+    stroke-dashoffset: 10;
+  }
 }
 
 /* Fullscreen mode styles */
