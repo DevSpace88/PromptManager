@@ -185,6 +185,8 @@ class PromptController extends Controller
 
         // Redirect zurück mit Erfolgsmeldung
         return redirect()->back()->with('success', 'Version set as current.');
+//        return redirect()->route('prompts.show', $prompt);
+
     }
 
     public function previewVersion(Prompt $prompt, PromptVersion $version)

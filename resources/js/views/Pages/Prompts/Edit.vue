@@ -123,41 +123,97 @@ const previewVersion = async (versionId) => {
 };
 
 // Set a specific version as current
+// const setVersionAsCurrent = (versionId) => {
+//   if (!confirm('Möchtest du diese Version aktivieren? Nicht gespeicherte Änderungen gehen verloren.')) {
+//     return;
+//   }
+//
+//   // Die Version-ID muss explizit mitgegeben werden
+//   const params = {
+//     prompt: props.prompt.id,
+//     version: versionId
+//   };
+//
+//   // Wir verwenden hier die Form-Submit-Methode, da sie zuverlässiger ist
+//   const form = document.createElement('form');
+//   form.method = 'POST';
+//   form.action = route('prompts.versions.set-current', params);
+//
+//   // CSRF-Token hinzufügen
+//   const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+//   const csrfInput = document.createElement('input');
+//   csrfInput.type = 'hidden';
+//   csrfInput.name = '_token';
+//   csrfInput.value = csrfToken;
+//   form.appendChild(csrfInput);
+//
+//   // Method-Spoofing für Laravel
+//   const methodInput = document.createElement('input');
+//   methodInput.type = 'hidden';
+//   methodInput.name = '_method';
+//   methodInput.value = 'POST';
+//   form.appendChild(methodInput);
+//
+//   // Formular zum DOM hinzufügen und absenden
+//   document.body.appendChild(form);
+//   form.submit();
+// };
+
+
+// const setVersionAsCurrent = (versionId) => {
+//   if (!confirm('Möchtest du diese Version aktivieren? Nicht gespeicherte Änderungen gehen verloren.')) {
+//     return;
+//   }
+//
+//   router.post(route('prompts.versions.set-current', {
+//     prompt: props.prompt.id,
+//     version: versionId
+//   })).then(() => {
+//     // Nach erfolgreichem Request die Seite neu laden
+//     router.reload();
+//   }).catch(error => {
+//     console.error('Fehler beim Setzen der Version:', error);
+//   });
+// };
+
+
 const setVersionAsCurrent = (versionId) => {
   if (!confirm('Möchtest du diese Version aktivieren? Nicht gespeicherte Änderungen gehen verloren.')) {
     return;
   }
 
-  // Die Version-ID muss explizit mitgegeben werden
   const params = {
     prompt: props.prompt.id,
     version: versionId
   };
 
-  // Wir verwenden hier die Form-Submit-Methode, da sie zuverlässiger ist
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = route('prompts.versions.set-current', params);
+  // Methode 1: Mit Axios
+  // Axios setzt automatisch den X-XSRF-TOKEN aus den Cookies
+  axios.post(route('prompts.versions.set-current', params))
+    .then(() => {
+      window.location.reload(); // Seite neu laden
+    })
+    .catch(error => {
+      console.error('Fehler beim Setzen der Version:', error);
+    });
 
-  // CSRF-Token hinzufügen
-  const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-  const csrfInput = document.createElement('input');
-  csrfInput.type = 'hidden';
-  csrfInput.name = '_token';
-  csrfInput.value = csrfToken;
-  form.appendChild(csrfInput);
-
-  // Method-Spoofing für Laravel
-  const methodInput = document.createElement('input');
-  methodInput.type = 'hidden';
-  methodInput.name = '_method';
-  methodInput.value = 'POST';
-  form.appendChild(methodInput);
-
-  // Formular zum DOM hinzufügen und absenden
-  document.body.appendChild(form);
-  form.submit();
+  // ODER Methode 2: Mit Formular-Submit (keine CSRF-Token-Abfrage nötig)
+  // const form = document.createElement('form');
+  // form.method = 'POST';
+  // form.action = route('prompts.versions.set-current', params);
+  //
+  // // Method-Spoofing für Laravel
+  // const methodInput = document.createElement('input');
+  // methodInput.type = 'hidden';
+  // methodInput.name = '_method';
+  // methodInput.value = 'POST';
+  // form.appendChild(methodInput);
+  //
+  // // Formular zum DOM hinzufügen und absenden
+  // document.body.appendChild(form);
+  // form.submit();
 };
+
 
 // Format date to localized string
 const formatDate = (dateString) => {
@@ -573,7 +629,7 @@ const submit = () => {
                         <small class="d-block">{{ formatDate(version.created_at) }}</small>
                       </div>
                       <div>
-                        <span v-if="version.is_current" class="badge rounded-pill bg-success">Aktuell</span>
+                        <span v-if="version.is_current" class="badge rounded-pill bg-light text-primary">Aktuell</span>
                         <i v-else class="fa fa-eye"></i>
                       </div>
                     </button>
@@ -648,7 +704,7 @@ const submit = () => {
                   <span
                     v-for="(tag, index) in form.tags"
                     :key="index"
-                    class="fs-sm fw-semibold d-inline-block py-1 px-3 rounded-pill bg-primary-light text-primary"
+                    class="fs-sm fw-semibold d-inline-block py-1 px-3 rounded-pill bg-primary text-white"
                   >
                     {{ tag }}
                     <button type="button" class="btn-close btn-close-white fs-sm ms-1" @click="removeTag(index)"></button>
