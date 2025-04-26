@@ -1,24 +1,41 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { useSortable } from '@/Composables/useSortable';
 
-// Pfade korrigieren basierend auf dem, was in anderen Dateien verwendet wird
-// Beachte: layouts ist kleingeschrieben in anderen Dateien
-import MonacoEditor from '@/Components/MonacoEditor.vue';
-// BaseLayout entfernen, da es nicht verwendet wird
-// import BasePageHeading aus den Imports entfernen, da es möglicherweise Probleme verursacht
-
-// Initialize form with empty values
+// Form initialization
 const form = useForm({
   title: '',
   description: '',
   content: '',
   tags: [],
+  prompt_sections: [
+    { id: 1, type: 'text', content: '', is_variable: false, variable_name: '' }
+  ]
 });
 
 // For handling tag inputs
 const newTag = ref('');
 const extractedVariables = ref([]);
+const isAiGenerating = ref(false);
+const aiSuggestion = ref('');
+
+// Section with editor focus
+const activeSection = ref(null);
+
+// Element references for drag-and-drop
+const sectionsContainer = ref(null);
+
+// Setup sortable for the sections
+useSortable(sectionsContainer, {
+  onEnd: (event) => {
+    const newSections = [...form.prompt_sections];
+    const [movedItem] = newSections.splice(event.oldIndex, 1);
+    newSections.splice(event.newIndex, 0, movedItem);
+    form.prompt_sections = newSections;
+    updatePromptContent();
+  }
+});
 
 // Extract variables from prompt content
 const extractVariables = (content) => {
@@ -60,12 +77,162 @@ const removeTag = (index) => {
   form.tags.splice(index, 1);
 };
 
+// Add a new prompt section
+const addSection = (type = 'text') => {
+  const newId = Math.max(0, ...form.prompt_sections.map(s => s.id)) + 1;
+  form.prompt_sections.push({
+    id: newId,
+    type,
+    content: '',
+    is_variable: false,
+    variable_name: ''
+  });
+};
+
+// Remove a section
+const removeSection = (index) => {
+  if (form.prompt_sections.length > 1) {
+    form.prompt_sections.splice(index, 1);
+    updatePromptContent();
+  }
+};
+
+// Toggle variable status for a section
+const toggleVariable = (section) => {
+  section.is_variable = !section.is_variable;
+  if (section.is_variable && !section.variable_name) {
+    // Generate a default variable name
+    section.variable_name = `variable_${section.id}`;
+  }
+  updatePromptContent();
+};
+
+// Update the main prompt content from all sections
+const updatePromptContent = () => {
+  let content = '';
+
+  form.prompt_sections.forEach((section) => {
+    if (section.is_variable) {
+      content += `{{${section.variable_name}}}`;
+    } else {
+      content += section.content;
+    }
+    content += '\n';
+  });
+
+  form.content = content.trim();
+};
+
+// Watch all sections for changes
+watch(() => form.prompt_sections, () => {
+  updatePromptContent();
+}, { deep: true });
+
+// Generate improved prompt with AI
+const generateImprovedPrompt = async (section) => {
+  if (!section.content.trim()) return;
+
+  isAiGenerating.value = true;
+  activeSection.value = section;
+
+  try {
+    // This is a placeholder - in a real implementation, you would call your backend API
+    const response = await fetch('/api/generate-improved-prompt', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt: section.content,
+        context: "Turn this into a more detailed, effective AI prompt using best practices"
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      section.content = data.improved_prompt;
+      updatePromptContent();
+    } else {
+      console.error('Failed to generate improved prompt');
+      // For demo, simulate AI response
+      setTimeout(() => {
+        section.content = improvePromptDemo(section.content);
+        updatePromptContent();
+        isAiGenerating.value = false;
+      }, 1500);
+    }
+  } catch (error) {
+    console.error('Error generating improved prompt:', error);
+    // For demo, simulate AI response
+    setTimeout(() => {
+      section.content = improvePromptDemo(section.content);
+      updatePromptContent();
+      isAiGenerating.value = false;
+    }, 1500);
+  } finally {
+    isAiGenerating.value = false;
+  }
+};
+
+// Demo function to simulate AI prompt improvement
+const improvePromptDemo = (originalPrompt) => {
+  // This is just a demo enhancement - in a real app, this would come from your AI service
+  const enhanced = originalPrompt.trim();
+  if (enhanced.toLowerCase().includes('summarize')) {
+    return `Please provide a comprehensive summary of the following text. The summary should:
+- Capture the main ideas and key points
+- Be approximately 25% of the original length
+- Maintain the tone and style of the original
+- Highlight any crucial statistics or data points
+- Organize information logically with clear structure
+
+Text to summarize:
+${enhanced.replace(/summarize/i, '')}`;
+  } else if (enhanced.toLowerCase().includes('write')) {
+    return `Create a well-structured, engaging piece of writing that:
+- Addresses the topic: ${enhanced.replace(/write/i, '')}
+- Uses a professional, clear tone
+- Includes specific examples and evidence
+- Follows a logical structure with introduction, main points, and conclusion
+- Avoids common clichés and generic statements
+- Provides unique insights backed by reasoning`;
+  } else {
+    return `${enhanced}
+
+Please provide a detailed, step-by-step response that:
+- Addresses all aspects of the request thoroughly
+- Uses specific examples where appropriate
+- Explains reasoning and methodology clearly
+- Structures information in a logical sequence
+- Considers potential limitations or alternatives
+- Focuses on practical, actionable information`;
+  }
+};
+
+// Format date for consistency with other components
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date);
+};
+
 // Submit the form
 const submit = () => {
+  updatePromptContent(); // Ensure content is updated before submission
   form.post(route('prompts.store'), {
     onSuccess: () => {
       // Reset form after successful submission
       form.reset();
+      form.prompt_sections = [
+        { id: 1, type: 'text', content: '', is_variable: false, variable_name: '' }
+      ];
       extractedVariables.value = [];
     },
   });
@@ -75,12 +242,11 @@ const submit = () => {
 <template>
   <Head title="Create Prompt" />
 
-  <!-- BasePageHeading durch einen einfachen Div ersetzen -->
   <div class="content">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
         <h1 class="h2 mb-1">Create Prompt</h1>
-        <p class="text-muted">Design an AI prompt template</p>
+        <p class="text-muted">Design an AI prompt template with dynamic sections</p>
       </div>
       <nav class="breadcrumb push">
         <Link :href="route('dashboard')" class="breadcrumb-item">
@@ -108,7 +274,7 @@ const submit = () => {
           <div class="row items-push">
             <div class="col-lg-4">
               <p class="text-muted">
-                Create a prompt template that can be reused in your workflows. Use <code>{{variable_name}}</code> syntax for variables that can be dynamically replaced.
+                Create a prompt template that can be reused in your workflows. Add dynamic sections and mark them as variables or use <code v-pre>{{variable_name}}</code> syntax for variables that can be dynamically replaced.
               </p>
 
               <div v-if="extractedVariables.length > 0" class="block block-rounded bg-body-light">
@@ -133,6 +299,19 @@ const submit = () => {
                 </div>
               </div>
 
+              <!-- Version Info Block for new users -->
+              <div class="block block-rounded bg-body-light mb-4">
+                <div class="block-header">
+                  <h3 class="block-title fs-sm">
+                    <i class="fa fa-fw fa-history me-1"></i> Versioning
+                  </h3>
+                </div>
+                <div class="block-content fs-sm">
+                  <p>Your prompt will be versioned automatically. Each time you edit the content, a new version will be created.</p>
+                  <p class="mb-0">You'll be able to view and restore previous versions after saving.</p>
+                </div>
+              </div>
+
               <!-- Tips Block -->
               <div class="block block-rounded bg-body-light">
                 <div class="block-header">
@@ -147,6 +326,7 @@ const submit = () => {
                     <li>Provide examples for better results (few-shot learning)</li>
                     <li>Break complex tasks into smaller steps</li>
                     <li>Use variables for dynamic content</li>
+                    <li>Use the AI enhancement button to improve your sections</li>
                   </ul>
                 </div>
               </div>
@@ -175,7 +355,7 @@ const submit = () => {
                   class="form-control"
                   :class="{ 'is-invalid': form.errors.description }"
                   v-model="form.description"
-                  rows="3"
+                  rows="2"
                   placeholder="Describe what this prompt does and how to use it"
                 ></textarea>
                 <div v-if="form.errors.description" class="invalid-feedback">{{ form.errors.description }}</div>
@@ -212,20 +392,111 @@ const submit = () => {
                 </div>
               </div>
 
-              <!-- Content - Text Area statt MonacoEditor -->
+              <!-- Dynamic Prompt Sections -->
               <div class="mb-4">
-                <label class="form-label" for="prompt-content">Prompt Content</label>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <label class="form-label mb-0">Prompt Sections</label>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-alt-success"
+                    @click="addSection"
+                  >
+                    <i class="fa fa-plus me-1"></i> Add Section
+                  </button>
+                </div>
+
+                <div ref="sectionsContainer" class="sections-container">
+                  <div
+                    v-for="(section, index) in form.prompt_sections"
+                    :key="section.id"
+                    class="block block-rounded mb-3 position-relative prompt-section"
+                    :class="{ 'block-bordered': section.is_variable }"
+                  >
+                    <div class="block-header block-header-default">
+                      <h3 class="block-title fs-sm">
+                        <i class="fa me-1" :class="section.is_variable ? 'fa-code text-info' : 'fa-align-left'"></i>
+                        {{ section.is_variable ? `Variable: ${section.variable_name}` : `Section ${index + 1}` }}
+                      </h3>
+                      <div class="block-options">
+                        <!-- Drag handle -->
+                        <button type="button" class="btn btn-sm btn-alt-secondary js-tooltip handle" title="Drag to reorder">
+                          <i class="fa fa-fw fa-arrows-alt"></i>
+                        </button>
+
+                        <!-- Toggle variable -->
+                        <button
+                          type="button"
+                          class="btn btn-sm"
+                          :class="section.is_variable ? 'btn-alt-info' : 'btn-alt-secondary'"
+                          @click="toggleVariable(section)"
+                          :title="section.is_variable ? 'Convert to text' : 'Convert to variable'"
+                        >
+                          <i class="fa fa-fw" :class="section.is_variable ? 'fa-font' : 'fa-code'"></i>
+                        </button>
+
+                        <!-- AI enhance button -->
+                        <button
+                          v-if="!section.is_variable"
+                          type="button"
+                          class="btn btn-sm btn-alt-warning"
+                          @click="generateImprovedPrompt(section)"
+                          :disabled="isAiGenerating"
+                        >
+                          <i class="fa fa-fw" :class="isAiGenerating && activeSection === section ? 'fa-spinner fa-spin' : 'fa-magic'"></i>
+                        </button>
+
+                        <!-- Remove section -->
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-alt-danger"
+                          @click="removeSection(index)"
+                          :disabled="form.prompt_sections.length <= 1"
+                        >
+                          <i class="fa fa-fw fa-times"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="block-content p-2">
+                      <div v-if="section.is_variable" class="mb-2">
+                        <div class="input-group input-group-sm">
+                          <span class="input-group-text bg-body-light">Variable Name</span>
+                          <input
+                            type="text"
+                            class="form-control form-control-sm"
+                            v-model="section.variable_name"
+                            placeholder="Enter variable name"
+                          >
+                        </div>
+                      </div>
+                      <textarea
+                        v-else
+                        class="form-control"
+                        v-model="section.content"
+                        rows="4"
+                        placeholder="Enter prompt text or click the magic wand to enhance with AI"
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Final Generated Prompt Preview -->
+              <div class="mb-4">
+                <label class="form-label" for="prompt-content">
+                  Final Prompt Preview
+                  <small class="text-muted">(Generated from sections above)</small>
+                </label>
                 <textarea
                   id="prompt-content"
-                  class="form-control"
-                  :class="{ 'is-invalid': form.errors.content }"
+                  class="form-control bg-body-light"
                   v-model="form.content"
-                  rows="10"
-                  placeholder="Enter your prompt template here..."
+                  rows="6"
+                  readonly
                 ></textarea>
-                <div v-if="form.errors.content" class="invalid-feedback">{{ form.errors.content }}</div>
+                <div v-if="form.errors.content" class="invalid-feedback d-block">{{ form.errors.content }}</div>
                 <div class="fs-sm text-muted mt-1">
-                  Use <code>{{variable_name}}</code> syntax to define variables that can be replaced when using this prompt.
+                  This is the final prompt that will be saved. It's automatically generated from your sections above.
                 </div>
               </div>
 
@@ -254,661 +525,17 @@ const submit = () => {
   </div>
 </template>
 
-
-<!--<script setup>-->
-<!--import { ref, watch } from 'vue';-->
-<!--import { Head, Link, useForm } from '@inertiajs/vue3';-->
-<!--import MonacoEditor from '@/components/MonacoEditor.vue';-->
-
-<!--// Initialize form with empty values-->
-<!--const form = useForm({-->
-<!--  title: '',-->
-<!--  description: '',-->
-<!--  content: '',-->
-<!--  tags: [],-->
-<!--});-->
-
-<!--// For handling tag inputs-->
-<!--const newTag = ref('');-->
-<!--const extractedVariables = ref([]);-->
-
-<!--// Extract variables from prompt content-->
-<!--const extractVariables = (content) => {-->
-<!--  if (!content) {-->
-<!--    extractedVariables.value = [];-->
-<!--    return;-->
-<!--  }-->
-
-<!--  const regex = /\{\{(.*?)\}\}/g;-->
-<!--  const matches = [...content.matchAll(regex)];-->
-<!--  extractedVariables.value = [...new Set(matches.map(match => match[1].trim()))];-->
-<!--};-->
-
-<!--// Watch for changes in content to extract variables-->
-<!--watch(() => form.content, (newContent) => {-->
-<!--  extractVariables(newContent);-->
-<!--});-->
-
-<!--// Add new tag-->
-<!--const addTag = () => {-->
-<!--  if (newTag.value.trim()) {-->
-<!--    if (!form.tags.includes(newTag.value.trim())) {-->
-<!--      form.tags.push(newTag.value.trim());-->
-<!--    }-->
-<!--    newTag.value = '';-->
-<!--  }-->
-<!--};-->
-
-<!--// Handle Enter key in tag input-->
-<!--const handleTagKeydown = (e) => {-->
-<!--  if (e.key === 'Enter') {-->
-<!--    e.preventDefault();-->
-<!--    addTag();-->
-<!--  }-->
-<!--};-->
-
-<!--// Remove a tag-->
-<!--const removeTag = (index) => {-->
-<!--  form.tags.splice(index, 1);-->
-<!--};-->
-
-<!--// Submit the form-->
-<!--const submit = () => {-->
-<!--  form.post(route('prompts.store'), {-->
-<!--    onSuccess: () => {-->
-<!--      // Reset form after successful submission-->
-<!--      form.reset();-->
-<!--      extractedVariables.value = [];-->
-<!--    },-->
-<!--  });-->
-<!--};-->
-<!--</script>-->
-
-<!--<template>-->
-<!--  <Head title="Create Prompt" />-->
-
-<!--  <BasePageHeading title="Create Prompt" subtitle="Design an AI prompt template">-->
-<!--    <template #extra>-->
-<!--      <nav class="breadcrumb push">-->
-<!--        <Link :href="route('dashboard')" class="breadcrumb-item">-->
-<!--          <i class="fa fa-home"></i>-->
-<!--        </Link>-->
-<!--        <Link :href="route('prompts.index')" class="breadcrumb-item">-->
-<!--          Prompts-->
-<!--        </Link>-->
-<!--        <span class="breadcrumb-item active">Create</span>-->
-<!--      </nav>-->
-<!--    </template>-->
-<!--  </BasePageHeading>-->
-
-<!--  <div class="content">-->
-<!--    &lt;!&ndash; Create Prompt Form &ndash;&gt;-->
-<!--    <form @submit.prevent="submit">-->
-<!--      <div class="block block-rounded">-->
-<!--        <div class="block-header block-header-default">-->
-<!--          <h3 class="block-title">Prompt Details</h3>-->
-<!--          <div class="block-options">-->
-<!--            <button type="submit" class="btn btn-sm btn-alt-primary" :disabled="form.processing">-->
-<!--              <i class="fa fa-fw fa-check opacity-50"></i> Save Prompt-->
-<!--            </button>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--        <div class="block-content block-content-full">-->
-<!--          <div class="row items-push">-->
-<!--            <div class="col-lg-4">-->
-<!--              <p class="text-muted">-->
-<!--                Create a prompt template that can be reused in your workflows. Use <code>{{variable_name}}</code> syntax for variables that can be dynamically replaced.-->
-<!--              </p>-->
-
-<!--              <div v-if="extractedVariables.length > 0" class="block block-rounded bg-body-light">-->
-<!--                <div class="block-header">-->
-<!--                  <h3 class="block-title fs-sm">-->
-<!--                    <i class="fa fa-fw fa-code me-1"></i> Detected Variables-->
-<!--                  </h3>-->
-<!--                </div>-->
-<!--                <div class="block-content">-->
-<!--                  <div class="d-flex flex-wrap gap-1 mb-2">-->
-<!--                    <span-->
-<!--                      v-for="variable in extractedVariables"-->
-<!--                      :key="variable"-->
-<!--                      class="fs-sm fw-semibold d-inline-block py-1 px-3 rounded-pill bg-success-light text-success"-->
-<!--                    >-->
-<!--                      {{ variable }}-->
-<!--                    </span>-->
-<!--                  </div>-->
-<!--                  <p class="fs-sm text-muted mb-0">-->
-<!--                    These variables will be available for input during prompt testing and workflow execution.-->
-<!--                  </p>-->
-<!--                </div>-->
-<!--              </div>-->
-
-<!--              &lt;!&ndash; Tips Block &ndash;&gt;-->
-<!--              <div class="block block-rounded bg-body-light">-->
-<!--                <div class="block-header">-->
-<!--                  <h3 class="block-title fs-sm">-->
-<!--                    <i class="fa fa-fw fa-lightbulb me-1"></i> Prompt Writing Tips-->
-<!--                  </h3>-->
-<!--                </div>-->
-<!--                <div class="block-content fs-sm">-->
-<!--                  <ul class="fa-ul mb-0">-->
-<!--                    <li>-->
-<!--                      <span class="fa-li"><i class="fa fa-check-circle text-success"></i></span>-->
-<!--                      Be specific with your instructions-->
-<!--                    </li>-->
-<!--                    <li>-->
-<!--                      <span class="fa-li"><i class="fa fa-check-circle text-success"></i></span>-->
-<!--                      Provide context and examples-->
-<!--                    </li>-->
-<!--                    <li>-->
-<!--                      <span class="fa-li"><i class="fa fa-check-circle text-success"></i></span>-->
-<!--                      Use variables for dynamic content-->
-<!--                    </li>-->
-<!--                    <li>-->
-<!--                      <span class="fa-li"><i class="fa fa-check-circle text-success"></i></span>-->
-<!--                      Test your prompts in the playground-->
-<!--                    </li>-->
-<!--                  </ul>-->
-<!--                </div>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--            <div class="col-lg-8 col-xl-8">-->
-<!--              &lt;!&ndash; Title Input &ndash;&gt;-->
-<!--              <div class="mb-4">-->
-<!--                <label class="form-label" for="title">Title</label>-->
-<!--                <div class="input-group">-->
-<!--                  <span class="input-group-text">-->
-<!--                    <i class="fa fa-heading"></i>-->
-<!--                  </span>-->
-<!--                  <input-->
-<!--                    id="title"-->
-<!--                    v-model="form.title"-->
-<!--                    type="text"-->
-<!--                    class="form-control"-->
-<!--                    :class="{'is-invalid': form.errors.title}"-->
-<!--                    placeholder="Enter a descriptive title"-->
-<!--                    required-->
-<!--                    autofocus-->
-<!--                  />-->
-<!--                </div>-->
-<!--                <div v-if="form.errors.title" class="invalid-feedback d-block">-->
-<!--                  {{ form.errors.title }}-->
-<!--                </div>-->
-<!--              </div>-->
-
-<!--              &lt;!&ndash; Description Input &ndash;&gt;-->
-<!--              <div class="mb-4">-->
-<!--                <label class="form-label" for="description">Description (optional)</label>-->
-<!--                <textarea-->
-<!--                  id="description"-->
-<!--                  v-model="form.description"-->
-<!--                  class="form-control"-->
-<!--                  :class="{'is-invalid': form.errors.description}"-->
-<!--                  placeholder="Explain what this prompt does"-->
-<!--                  rows="3"-->
-<!--                ></textarea>-->
-<!--                <div v-if="form.errors.description" class="invalid-feedback d-block">-->
-<!--                  {{ form.errors.description }}-->
-<!--                </div>-->
-<!--              </div>-->
-
-<!--              &lt;!&ndash; Tags Input &ndash;&gt;-->
-<!--              <div class="mb-4">-->
-<!--                <label class="form-label" for="tags">Tags (optional)</label>-->
-<!--                <div class="d-flex flex-wrap gap-2 mb-2">-->
-<!--                  <span-->
-<!--                    v-for="(tag, index) in form.tags"-->
-<!--                    :key="index"-->
-<!--                    class="fs-sm fw-semibold d-inline-block py-1 px-3 rounded-pill bg-primary-lighter text-primary"-->
-<!--                  >-->
-<!--                    {{ tag }}-->
-<!--                    <button-->
-<!--                      type="button"-->
-<!--                      class="btn-close btn-close-sm ms-1"-->
-<!--                      @click="removeTag(index)"-->
-<!--                      aria-label="Remove tag"-->
-<!--                    ></button>-->
-<!--                  </span>-->
-<!--                </div>-->
-<!--                <div class="input-group">-->
-<!--                  <span class="input-group-text">-->
-<!--                    <i class="fa fa-tags"></i>-->
-<!--                  </span>-->
-<!--                  <input-->
-<!--                    id="newTag"-->
-<!--                    v-model="newTag"-->
-<!--                    type="text"-->
-<!--                    class="form-control"-->
-<!--                    placeholder="Add a tag"-->
-<!--                    @keydown="handleTagKeydown"-->
-<!--                  />-->
-<!--                  <button-->
-<!--                    type="button"-->
-<!--                    class="btn btn-alt-primary"-->
-<!--                    @click="addTag"-->
-<!--                  >-->
-<!--                    <i class="fa fa-plus me-1"></i> Add-->
-<!--                  </button>-->
-<!--                </div>-->
-<!--                <div v-if="form.errors.tags" class="invalid-feedback d-block">-->
-<!--                  {{ form.errors.tags }}-->
-<!--                </div>-->
-<!--              </div>-->
-
-<!--              &lt;!&ndash; Prompt Content Input &ndash;&gt;-->
-<!--              <div class="mb-4">-->
-<!--                <label class="form-label" for="content">Prompt Content</label>-->
-<!--                <div class="form-text mb-2">-->
-<!--                  Use <code>{{variable_name}}</code> for variables that can be dynamically replaced.-->
-<!--                </div>-->
-<!--                <div class="monaco-editor-container border rounded" style="height: 400px;">-->
-<!--                  <MonacoEditor-->
-<!--                    id="content"-->
-<!--                    v-model="form.content"-->
-<!--                    class="h-100 w-100 font-mono"-->
-<!--                    language="markdown"-->
-<!--                    theme="vs-dark"-->
-<!--                  />-->
-<!--                </div>-->
-<!--                <div v-if="form.errors.content" class="invalid-feedback d-block">-->
-<!--                  {{ form.errors.content }}-->
-<!--                </div>-->
-<!--              </div>-->
-
-<!--              &lt;!&ndash; Form Buttons &ndash;&gt;-->
-<!--              <div class="d-flex justify-content-end">-->
-<!--                <Link-->
-<!--                  :href="route('prompts.index')"-->
-<!--                  class="btn btn-alt-secondary me-1"-->
-<!--                  v-click-ripple-->
-<!--                >-->
-<!--                  <i class="fa fa-arrow-left opacity-50 me-1"></i> Cancel-->
-<!--                </Link>-->
-<!--                <button-->
-<!--                  type="submit"-->
-<!--                  class="btn btn-alt-primary"-->
-<!--                  :class="{ 'disabled': form.processing }"-->
-<!--                  :disabled="form.processing"-->
-<!--                  v-click-ripple-->
-<!--                >-->
-<!--                  <i class="fa fa-check opacity-50 me-1"></i> Create Prompt-->
-<!--                </button>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--    </form>-->
-<!--    &lt;!&ndash; END Create Prompt Form &ndash;&gt;-->
-
-<!--    &lt;!&ndash; Example Prompts Block &ndash;&gt;-->
-<!--    <div class="block block-rounded">-->
-<!--      <div class="block-header block-header-default">-->
-<!--        <h3 class="block-title">Example Prompt Templates</h3>-->
-<!--        <div class="block-options">-->
-<!--          <button type="button" class="btn-block-option" data-toggle="block-option" data-action="content_toggle"><i class="fa fa-caret-down"></i></button>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--      <div class="block-content block-content-full">-->
-<!--        <div class="row">-->
-<!--          &lt;!&ndash; Example 1 &ndash;&gt;-->
-<!--          <div class="col-md-6">-->
-<!--            <div class="block block-rounded bg-body-light mb-2">-->
-<!--              <div class="block-header">-->
-<!--                <h3 class="block-title fs-sm">Text Summarization</h3>-->
-<!--              </div>-->
-<!--              <div class="block-content">-->
-<!--               <pre class="bg-body p-3 rounded fs-sm mb-0">Summarize the following text in \{\{length\}\} sentences:-->
-
-<!--\{\{text_to_summarize\}\}</pre>-->
-<!--                <div class="text-muted fs-sm mt-2">Variables: length, text_to_summarize</div>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--          &lt;!&ndash; Example 2 &ndash;&gt;-->
-<!--          <div class="col-md-6">-->
-<!--            <div class="block block-rounded bg-body-light mb-2">-->
-<!--              <div class="block-header">-->
-<!--                <h3 class="block-title fs-sm">Content Generation</h3>-->
-<!--              </div>-->
-<!--              <div class="block-content">-->
-<!--               <pre class="bg-body p-3 rounded fs-sm mb-0">Write a \{\{tone\}\} blog post about \{\{topic\}\}.-->
-<!--The post should be around \{\{word_count\}\} words and focus on \{\{key_points\}\}.</pre>-->
-<!--                <div class="text-muted fs-sm mt-2">Variables: tone, topic, word_count, key_points</div>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--    </div>-->
-<!--    &lt;!&ndash; END Example Prompts Block &ndash;&gt;-->
-<!--  </div>-->
-<!--</template>-->
-
-<!--<script setup>-->
-<!--import { ref, watch } from 'vue';-->
-<!--import { Head, Link, useForm } from '@inertiajs/vue3';-->
-<!--import MonacoEditor from '@/components/MonacoEditor.vue';-->
-
-<!--// Initialize form with empty values-->
-<!--const form = useForm({-->
-<!--  title: '',-->
-<!--  description: '',-->
-<!--  content: '',-->
-<!--  tags: [],-->
-<!--});-->
-
-<!--// For handling tag inputs-->
-<!--const newTag = ref('');-->
-<!--const extractedVariables = ref([]);-->
-
-<!--// Extract variables from prompt content-->
-<!--const extractVariables = (content) => {-->
-<!--  if (!content) {-->
-<!--    extractedVariables.value = [];-->
-<!--    return;-->
-<!--  }-->
-
-<!--  const regex = /\{\{(.*?)\}\}/g;-->
-<!--  const matches = [...content.matchAll(regex)];-->
-<!--  extractedVariables.value = [...new Set(matches.map(match => match[1].trim()))];-->
-<!--};-->
-
-<!--// Watch for changes in content to extract variables-->
-<!--watch(() => form.content, (newContent) => {-->
-<!--  extractVariables(newContent);-->
-<!--});-->
-
-<!--// Add new tag-->
-<!--const addTag = () => {-->
-<!--  if (newTag.value.trim()) {-->
-<!--    if (!form.tags.includes(newTag.value.trim())) {-->
-<!--      form.tags.push(newTag.value.trim());-->
-<!--    }-->
-<!--    newTag.value = '';-->
-<!--  }-->
-<!--};-->
-
-<!--// Handle Enter key in tag input-->
-<!--const handleTagKeydown = (e) => {-->
-<!--  if (e.key === 'Enter') {-->
-<!--    e.preventDefault();-->
-<!--    addTag();-->
-<!--  }-->
-<!--};-->
-
-<!--// Remove a tag-->
-<!--const removeTag = (index) => {-->
-<!--  form.tags.splice(index, 1);-->
-<!--};-->
-
-<!--// Submit the form-->
-<!--const submit = () => {-->
-<!--  form.post(route('prompts.store'), {-->
-<!--    onSuccess: () => {-->
-<!--      // Reset form after successful submission-->
-<!--      form.reset();-->
-<!--      extractedVariables.value = [];-->
-<!--    },-->
-<!--  });-->
-<!--};-->
-<!--</script>-->
-
-<!--<template>-->
-<!--  <Head title="Create Prompt" />-->
-
-<!--  <BasePageHeading title="Create Prompt" subtitle="Design an AI prompt template">-->
-<!--    <template #extra>-->
-<!--      <nav class="breadcrumb push">-->
-<!--        <Link :href="route('dashboard')" class="breadcrumb-item">-->
-<!--          <i class="fa fa-home"></i>-->
-<!--        </Link>-->
-<!--        <Link :href="route('prompts.index')" class="breadcrumb-item">-->
-<!--          Prompts-->
-<!--        </Link>-->
-<!--        <span class="breadcrumb-item active">Create</span>-->
-<!--      </nav>-->
-<!--    </template>-->
-<!--  </BasePageHeading>-->
-
-<!--  <div class="content">-->
-<!--    &lt;!&ndash; Create Prompt Form &ndash;&gt;-->
-<!--    <form @submit.prevent="submit">-->
-<!--      <div class="block block-rounded">-->
-<!--        <div class="block-header block-header-default">-->
-<!--          <h3 class="block-title">Prompt Details</h3>-->
-<!--          <div class="block-options">-->
-<!--            <button type="submit" class="btn btn-sm btn-alt-primary" :disabled="form.processing">-->
-<!--              <i class="fa fa-fw fa-check opacity-50"></i> Save Prompt-->
-<!--            </button>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--        <div class="block-content block-content-full">-->
-<!--          <div class="row items-push">-->
-<!--            <div class="col-lg-4">-->
-<!--              <p class="text-muted">-->
-<!--                Create a prompt template that can be reused in your workflows. Use <code>\{\{variable_name\}\}</code> syntax for variables that can be dynamically replaced.-->
-<!--              </p>-->
-
-<!--              <div v-if="extractedVariables.length > 0" class="block block-rounded bg-body-light">-->
-<!--                <div class="block-header">-->
-<!--                  <h3 class="block-title fs-sm">-->
-<!--                    <i class="fa fa-fw fa-code me-1"></i> Detected Variables-->
-<!--                  </h3>-->
-<!--                </div>-->
-<!--                <div class="block-content">-->
-<!--                  <div class="d-flex flex-wrap gap-1 mb-2">-->
-<!--                    <span-->
-<!--                      v-for="variable in extractedVariables"-->
-<!--                      :key="variable"-->
-<!--                      class="fs-sm fw-semibold d-inline-block py-1 px-3 rounded-pill bg-success-light text-success"-->
-<!--                    >-->
-<!--                      {{ variable }}-->
-<!--                    </span>-->
-<!--                  </div>-->
-<!--                  <p class="fs-sm text-muted mb-0">-->
-<!--                    These variables will be available for input during prompt testing and workflow execution.-->
-<!--                  </p>-->
-<!--                </div>-->
-<!--              </div>-->
-
-<!--              &lt;!&ndash; Tips Block &ndash;&gt;-->
-<!--              <div class="block block-rounded bg-body-light">-->
-<!--                <div class="block-header">-->
-<!--                  <h3 class="block-title fs-sm">-->
-<!--                    <i class="fa fa-fw fa-lightbulb me-1"></i> Prompt Writing Tips-->
-<!--                  </h3>-->
-<!--                </div>-->
-<!--                <div class="block-content fs-sm">-->
-<!--                  <ul class="fa-ul mb-0">-->
-<!--                    <li>-->
-<!--                      <span class="fa-li"><i class="fa fa-check-circle text-success"></i></span>-->
-<!--                      Be specific with your instructions-->
-<!--                    </li>-->
-<!--                    <li>-->
-<!--                      <span class="fa-li"><i class="fa fa-check-circle text-success"></i></span>-->
-<!--                      Provide context and examples-->
-<!--                    </li>-->
-<!--                    <li>-->
-<!--                      <span class="fa-li"><i class="fa fa-check-circle text-success"></i></span>-->
-<!--                      Use variables for dynamic content-->
-<!--                    </li>-->
-<!--                    <li>-->
-<!--                      <span class="fa-li"><i class="fa fa-check-circle text-success"></i></span>-->
-<!--                      Test your prompts in the playground-->
-<!--                    </li>-->
-<!--                  </ul>-->
-<!--                </div>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--            <div class="col-lg-8 col-xl-8">-->
-<!--              &lt;!&ndash; Title Input &ndash;&gt;-->
-<!--              <div class="mb-4">-->
-<!--                <label class="form-label" for="title">Title</label>-->
-<!--                <div class="input-group">-->
-<!--                  <span class="input-group-text">-->
-<!--                    <i class="fa fa-heading"></i>-->
-<!--                  </span>-->
-<!--                  <input-->
-<!--                    id="title"-->
-<!--                    v-model="form.title"-->
-<!--                    type="text"-->
-<!--                    class="form-control"-->
-<!--                    :class="{'is-invalid': form.errors.title}"-->
-<!--                    placeholder="Enter a descriptive title"-->
-<!--                    required-->
-<!--                    autofocus-->
-<!--                  />-->
-<!--                </div>-->
-<!--                <div v-if="form.errors.title" class="invalid-feedback d-block">-->
-<!--                  {{ form.errors.title }}-->
-<!--                </div>-->
-<!--              </div>-->
-
-<!--              &lt;!&ndash; Description Input &ndash;&gt;-->
-<!--              <div class="mb-4">-->
-<!--                <label class="form-label" for="description">Description (optional)</label>-->
-<!--                <textarea-->
-<!--                  id="description"-->
-<!--                  v-model="form.description"-->
-<!--                  class="form-control"-->
-<!--                  :class="{'is-invalid': form.errors.description}"-->
-<!--                  placeholder="Explain what this prompt does"-->
-<!--                  rows="3"-->
-<!--                ></textarea>-->
-<!--                <div v-if="form.errors.description" class="invalid-feedback d-block">-->
-<!--                  {{ form.errors.description }}-->
-<!--                </div>-->
-<!--              </div>-->
-
-<!--              &lt;!&ndash; Tags Input &ndash;&gt;-->
-<!--              <div class="mb-4">-->
-<!--                <label class="form-label" for="tags">Tags (optional)</label>-->
-<!--                <div class="d-flex flex-wrap gap-2 mb-2">-->
-<!--                  <span-->
-<!--                    v-for="(tag, index) in form.tags"-->
-<!--                    :key="index"-->
-<!--                    class="fs-sm fw-semibold d-inline-block py-1 px-3 rounded-pill bg-primary-lighter text-primary"-->
-<!--                  >-->
-<!--                    {{ tag }}-->
-<!--                    <button-->
-<!--                      type="button"-->
-<!--                      class="btn-close btn-close-sm ms-1"-->
-<!--                      @click="removeTag(index)"-->
-<!--                      aria-label="Remove tag"-->
-<!--                    ></button>-->
-<!--                  </span>-->
-<!--                </div>-->
-<!--                <div class="input-group">-->
-<!--                  <span class="input-group-text">-->
-<!--                    <i class="fa fa-tags"></i>-->
-<!--                  </span>-->
-<!--                  <input-->
-<!--                    id="newTag"-->
-<!--                    v-model="newTag"-->
-<!--                    type="text"-->
-<!--                    class="form-control"-->
-<!--                    placeholder="Add a tag"-->
-<!--                    @keydown="handleTagKeydown"-->
-<!--                  />-->
-<!--                  <button-->
-<!--                    type="button"-->
-<!--                    class="btn btn-alt-primary"-->
-<!--                    @click="addTag"-->
-<!--                  >-->
-<!--                    <i class="fa fa-plus me-1"></i> Add-->
-<!--                  </button>-->
-<!--                </div>-->
-<!--                <div v-if="form.errors.tags" class="invalid-feedback d-block">-->
-<!--                  {{ form.errors.tags }}-->
-<!--                </div>-->
-<!--              </div>-->
-
-<!--              &lt;!&ndash; Prompt Content Input &ndash;&gt;-->
-<!--              <div class="mb-4">-->
-<!--                <label class="form-label" for="content">Prompt Content</label>-->
-<!--                <div class="form-text mb-2">-->
-<!--                  Use <code>\{\{variable_name\}\}</code> for variables that can be dynamically replaced.-->
-<!--                </div>-->
-<!--                <div class="monaco-editor-container border rounded" style="height: 400px;">-->
-<!--                  <MonacoEditor-->
-<!--                    id="content"-->
-<!--                    v-model="form.content"-->
-<!--                    class="h-100 w-100 font-mono"-->
-<!--                    language="markdown"-->
-<!--                    theme="vs-dark"-->
-<!--                  />-->
-<!--                </div>-->
-<!--                <div v-if="form.errors.content" class="invalid-feedback d-block">-->
-<!--                  {{ form.errors.content }}-->
-<!--                </div>-->
-<!--              </div>-->
-
-<!--              &lt;!&ndash; Form Buttons &ndash;&gt;-->
-<!--              <div class="d-flex justify-content-end">-->
-<!--                <Link-->
-<!--                  :href="route('prompts.index')"-->
-<!--                  class="btn btn-alt-secondary me-1"-->
-<!--                  v-click-ripple-->
-<!--                >-->
-<!--                  <i class="fa fa-arrow-left opacity-50 me-1"></i> Cancel-->
-<!--                </Link>-->
-<!--                <button-->
-<!--                  type="submit"-->
-<!--                  class="btn btn-alt-primary"-->
-<!--                  :class="{ 'disabled': form.processing }"-->
-<!--                  :disabled="form.processing"-->
-<!--                  v-click-ripple-->
-<!--                >-->
-<!--                  <i class="fa fa-check opacity-50 me-1"></i> Create Prompt-->
-<!--                </button>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--    </form>-->
-<!--    &lt;!&ndash; END Create Prompt Form &ndash;&gt;-->
-
-<!--    &lt;!&ndash; Example Prompts Block &ndash;&gt;-->
-<!--    <div class="block block-rounded">-->
-<!--      <div class="block-header block-header-default">-->
-<!--        <h3 class="block-title">Example Prompt Templates</h3>-->
-<!--        <div class="block-options">-->
-<!--          <button type="button" class="btn-block-option" data-toggle="block-option" data-action="content_toggle"><i class="fa fa-caret-down"></i></button>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--      <div class="block-content block-content-full">-->
-<!--        <div class="row">-->
-<!--          &lt;!&ndash; Example 1 &ndash;&gt;-->
-<!--          <div class="col-md-6">-->
-<!--            <div class="block block-rounded bg-body-light mb-2">-->
-<!--              <div class="block-header">-->
-<!--                <h3 class="block-title fs-sm">Text Summarization</h3>-->
-<!--              </div>-->
-<!--              <div class="block-content">-->
-<!--               <pre class="bg-body p-3 rounded fs-sm mb-0">Summarize the following text in \{\{length\}\} sentences:-->
-
-<!--\{\{text_to_summarize\}\}</pre>-->
-<!--                <div class="text-muted fs-sm mt-2">Variables: length, text_to_summarize</div>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--          &lt;!&ndash; Example 2 &ndash;&gt;-->
-<!--          <div class="col-md-6">-->
-<!--            <div class="block block-rounded bg-body-light mb-2">-->
-<!--              <div class="block-header">-->
-<!--                <h3 class="block-title fs-sm">Content Generation</h3>-->
-<!--              </div>-->
-<!--              <div class="block-content">-->
-<!--               <pre class="bg-body p-3 rounded fs-sm mb-0">Write a \{\{tone\}\} blog post about \{\{topic\}\}.-->
-<!--The post should be around \{\{word_count\}\} words and focus on \{\{key_points\}\}.</pre>-->
-<!--                <div class="text-muted fs-sm mt-2">Variables: tone, topic, word_count, key_points</div>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--    </div>-->
-<!--    &lt;!&ndash; END Example Prompts Block &ndash;&gt;-->
-<!--  </div>-->
-<!--</template>-->
+<style scoped>
+.handle {
+  cursor: grab;
+}
+.handle:active {
+  cursor: grabbing;
+}
+.prompt-section {
+  transition: all 0.2s ease;
+}
+.prompt-section:hover {
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.05);
+}
+</style>

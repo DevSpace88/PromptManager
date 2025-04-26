@@ -191,6 +191,7 @@ use App\Http\Controllers\ApiKeyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PlaygroundController;
 use App\Http\Controllers\PromptController;
+use App\Http\Controllers\PromptEnhancerController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\WorkflowController;
 use Illuminate\Foundation\Application;
@@ -218,14 +219,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    Route::post('/generate-improved-prompt', [PromptEnhancerController::class, 'enhance']);
+
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Prompts - Spezifische Routen vor Resource-Routen
+
+    Route::get('/prompts/{prompt}/versions/{version}/preview', [PromptController::class, 'previewVersion'])
+        ->name('prompts.versions.preview');
     Route::post('/prompts/{prompt}/versions/{version}/set-current', [PromptController::class, 'setVersion'])
         ->name('prompts.versions.set-current');
+    Route::get('/prompts/{prompt}/versions', [PromptController::class, 'getVersions'])
+        ->name('prompts.versions');
     Route::resource('prompts', PromptController::class);
 
     // Workflows - Spezifische Routen vor Resource-Routen
