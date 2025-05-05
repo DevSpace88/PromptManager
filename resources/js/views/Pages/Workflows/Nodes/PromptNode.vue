@@ -1445,6 +1445,7 @@ const config = ref({
     { value: 'openai', label: 'OpenAI' },
     { value: 'anthropic', label: 'Anthropic' },
     { value: 'google', label: 'Google' },
+    { value: 'deepseek', label: 'DeepSeek' },
     { value: 'ollama', label: 'Ollama (Local)' },
   ],
   availableModels: {
@@ -1461,6 +1462,11 @@ const config = ref({
     google: [
       { value: 'gemini-pro', label: 'Gemini Pro' },
       { value: 'gemini-ultra', label: 'Gemini Ultra' }
+    ],
+    deepseek: [
+      { value: 'deepseek-coder', label: 'DeepSeek Coder' },
+      { value: 'deepseek-llm', label: 'DeepSeek LLM' },
+      { value: 'deepseek-chat', label: 'DeepSeek Chat' }
     ],
     ollama: [
       { value: 'llama3', label: 'Llama 3' },
