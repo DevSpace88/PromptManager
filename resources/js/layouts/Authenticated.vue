@@ -57,38 +57,88 @@ store.mainContent({ mode: "narrow" });
 
     <!-- Sidebar Content -->
     <!-- Using the available v-slot, we can override the default Sidebar content from layouts/partials/Sidebar.vue -->
+<!--    <template #sidebar-content>-->
+<!--      <div class="content-side">-->
+<!--        <BaseNavigation-->
+<!--          :nodes="[-->
+<!--            {-->
+<!--              name: 'Dashboard',-->
+<!--              to: '/dashboard',-->
+<!--              icon: 'fa fa-rocket',-->
+<!--            },-->
+<!--            {-->
+<!--              name: 'Account',-->
+<!--              heading: true,-->
+<!--            },-->
+<!--            {-->
+<!--              name: 'Profile',-->
+<!--              to: '/profile',-->
+<!--              icon: 'fa fa-user-circle',-->
+<!--            },-->
+<!--            {-->
+<!--              name: 'More',-->
+<!--              heading: true,-->
+<!--            },-->
+<!--            {-->
+<!--              name: 'Landing',-->
+<!--              to: '/',-->
+<!--              icon: 'fa fa-arrow-left',-->
+<!--            },-->
+<!--          ]"-->
+<!--        />-->
+<!--      </div>-->
+<!--    </template>-->
+    <!-- END Sidebar Content -->
+
+
     <template #sidebar-content>
       <div class="content-side">
         <BaseNavigation
           :nodes="[
-            {
-              name: 'Dashboard',
-              to: '/dashboard',
-              icon: 'fa fa-rocket',
-            },
-            {
-              name: 'Account',
-              heading: true,
-            },
-            {
-              name: 'Profile',
-              to: '/profile',
-              icon: 'fa fa-user-circle',
-            },
-            {
-              name: 'More',
-              heading: true,
-            },
-            {
-              name: 'Landing',
-              to: '/',
-              icon: 'fa fa-arrow-left',
-            },
-          ]"
+        {
+          name: 'Dashboard',
+          to: '/dashboard',
+          icon: 'fa fa-rocket',
+        },
+        {
+          name: 'Prompts',
+          to: '/prompts',
+          icon: 'fa fa-comment',
+        },
+        {
+          name: 'Workflows',
+          to: '/workflows',
+          icon: 'fa fa-project-diagram',
+        },
+        {
+          name: 'API Keys',
+          to: '/api-keys',
+          icon: 'fa fa-key',
+        },
+        {
+          name: 'Account',
+          heading: true,
+        },
+        {
+          name: 'Profile',
+          to: '/profile',
+          icon: 'fa fa-user-circle',
+        },
+        {
+          name: 'More',
+          heading: true,
+        },
+        {
+          name: 'Landing',
+          to: '/',
+          icon: 'fa fa-arrow-left',
+        },
+      ]"
         />
       </div>
     </template>
-    <!-- END Sidebar Content -->
+
+
 
     <!-- Header Content Left -->
     <!-- Using the available v-slot, we can override the default Header content from layouts/partials/Header.vue -->

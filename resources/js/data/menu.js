@@ -7,736 +7,117 @@ export default {
   main: [
     {
       name: "Dashboard",
-      to: "/preview/backend/dashboard",
+      to: "/dashboard",
       icon: "si si-speedometer",
     },
-    // You can also set an external link to your main navigation and it will render as a link
-    // {
-    //   name: "Link Name",
-    //   to: "https://example.com",
-    //   icon: "si si-link",
-    //   target: "_blank", // You can also set its target property
-    // },
     {
-      name: "Page Packs",
-      icon: "si si-layers",
-      subActivePaths: "/preview/backend/page-packs",
-      sub: [
-        {
-          name: "Blog",
-          icon: "si si-pencil",
-          subActivePaths: "/preview/backend/page-packs/blog",
-          sub: [
-            {
-              name: "Classic",
-              to: "/preview/backend/page-packs/blog/classic",
-            },
-            {
-              name: "List",
-              to: "/preview/backend/page-packs/blog/list",
-            },
-            {
-              name: "Grid",
-              to: "/preview/backend/page-packs/blog/grid",
-            },
-            {
-              name: "Story",
-              to: "/preview/backend/page-packs/blog/story",
-            },
-            {
-              name: "Story Cover",
-              to: "/preview/backend/page-packs/blog/story-cover",
-            },
-          ],
-        },
-        {
-          name: "e-Learning",
-          icon: "si si-graduation",
-          subActivePaths: "/preview/backend/page-packs/elearning",
-          sub: [
-            {
-              name: "Courses",
-              to: "/preview/backend/page-packs/elearning/courses",
-            },
-            {
-              name: "Course",
-              to: "/preview/backend/page-packs/elearning/course",
-            },
-            {
-              name: "Lesson",
-              to: "/preview/backend/page-packs/elearning/lesson",
-            },
-          ],
-        },
-        {
-          name: "Forum",
-          icon: "si si-bubbles",
-          subActivePaths: "/preview/backend/page-packs/forum",
-          sub: [
-            {
-              name: "Categories",
-              to: "/preview/backend/page-packs/forum/categories",
-            },
-            {
-              name: "Topics",
-              to: "/preview/backend/page-packs/forum/topics",
-            },
-            {
-              name: "Discussion",
-              to: "/preview/backend/page-packs/forum/discussion",
-            },
-          ],
-        },
-        {
-          name: "Boxed Backend",
-          icon: "si si-magnet",
-          subActivePaths: "/preview/backend-boxed",
-          sub: [
-            {
-              name: "Dashboard",
-              to: "/preview/backend-boxed",
-            },
-            {
-              name: "Search",
-              to: "/preview/backend-boxed/search",
-            },
-            {
-              name: "Simple 1",
-              to: "/preview/backend-boxed/simple1",
-            },
-            {
-              name: "Simple 2",
-              to: "/preview/backend-boxed/simple2",
-            },
-            {
-              name: "Image 1",
-              to: "/preview/backend-boxed/image1",
-            },
-            {
-              name: "Image 2",
-              to: "/preview/backend-boxed/image2",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: "User Interface",
+      name: "AI Tools",
       heading: true,
     },
     {
-      name: "Blocks",
-      icon: "si si-energy",
-      subActivePaths: "/preview/backend/blocks",
+      name: "Prompts",
+      to: "/prompts",
+      icon: "si si-bubble",
+    },
+    {
+      name: "Workflows",
+      to: "/workflows",
+      icon: "si si-flow",
+    },
+    {
+      name: "Playground",
+      to: "/playground",
+      icon: "si si-chemistry",
+    },
+    {
+      name: "API Keys",
+      to: "/api-keys",
+      icon: "si si-key",
+    },
+    {
+      name: "Models",
+      icon: "si si-ghost",
+      subActivePaths: "/models",
       sub: [
         {
-          name: "Styles",
-          to: "/preview/backend/blocks/styles",
+          name: "Overview",
+          to: "/models",
         },
         {
-          name: "Options",
-          to: "/preview/backend/blocks/options",
+          name: "Settings",
+          to: "/models/settings",
         },
         {
-          name: "Forms",
-          to: "/preview/backend/blocks/forms",
-        },
-        {
-          name: "Themed",
-          to: "/preview/backend/blocks/themed",
-        },
-        {
-          name: "API",
-          to: "/preview/backend/blocks/api",
-        },
+          name: "Fine-tuning",
+          to: "/models/fine-tuning",
+        }
       ],
     },
     {
-      name: "Elements",
-      icon: "si si-badge",
-      subActivePaths: "/preview/backend/elements",
-      sub: [
-        {
-          name: "Grid",
-          to: "/preview/backend/elements/grid",
-        },
-        {
-          name: "Typography",
-          to: "/preview/backend/elements/typography",
-        },
-        {
-          name: "Icons",
-          to: "/preview/backend/elements/icons",
-        },
-        {
-          name: "Buttons",
-          to: "/preview/backend/elements/buttons",
-        },
-        {
-          name: "Button Groups",
-          to: "/preview/backend/elements/button-groups",
-        },
-        {
-          name: "Dropdowns",
-          to: "/preview/backend/elements/dropdowns",
-        },
-        {
-          name: "Tabs",
-          to: "/preview/backend/elements/tabs",
-        },
-        {
-          name: "Navigation",
-          to: "/preview/backend/elements/navigation",
-        },
-        {
-          name: "Horizontal Navigation",
-          to: "/preview/backend/elements/navigation-horizontal",
-        },
-        {
-          name: "Mega Menu",
-          to: "/preview/backend/elements/mega-menu",
-        },
-        {
-          name: "Progress",
-          to: "/preview/backend/elements/progress",
-        },
-        {
-          name: "Alerts",
-          to: "/preview/backend/elements/alerts",
-        },
-        {
-          name: "Tooltips",
-          to: "/preview/backend/elements/tooltips",
-        },
-        {
-          name: "Popovers",
-          to: "/preview/backend/elements/popovers",
-        },
-        {
-          name: "Modals",
-          to: "/preview/backend/elements/modals",
-        },
-        {
-          name: "Images Overlay",
-          to: "/preview/backend/elements/images-overlay",
-        },
-        {
-          name: "Timeline",
-          to: "/preview/backend/elements/timeline",
-        },
-        {
-          name: "Ribbons",
-          to: "/preview/backend/elements/ribbons",
-        },
-        {
-          name: "Steps",
-          to: "/preview/backend/elements/steps",
-        },
-        {
-          name: "Animations",
-          to: "/preview/backend/elements/animations",
-        },
-        {
-          name: "Color Themes",
-          to: "/preview/backend/elements/color-themes",
-        },
-      ],
-    },
-    {
-      name: "Tables",
-      icon: "si si-grid",
-      subActivePaths: "/preview/backend/tables",
-      sub: [
-        {
-          name: "Styles",
-          to: "/preview/backend/tables/styles",
-        },
-        {
-          name: "Responsive",
-          to: "/preview/backend/tables/responsive",
-        },
-        {
-          name: "Helpers",
-          to: "/preview/backend/tables/helpers",
-        },
-      ],
-    },
-    {
-      name: "Forms",
-      icon: "si si-note",
-      subActivePaths: "/preview/backend/forms",
-      sub: [
-        {
-          name: "Elements",
-          to: "/preview/backend/forms/elements",
-        },
-        {
-          name: "Layouts",
-          to: "/preview/backend/forms/layouts",
-        },
-        {
-          name: "Input Groups",
-          to: "/preview/backend/forms/input-groups",
-        },
-        {
-          name: "Plugins",
-          to: "/preview/backend/forms/plugins",
-        },
-        {
-          name: "Editors",
-          to: "/preview/backend/forms/editors",
-        },
-        {
-          name: "Validation",
-          to: "/preview/backend/forms/validation",
-        },
-      ],
-    },
-    {
-      name: "Develop",
+      name: "Content",
       heading: true,
     },
     {
-      name: "Plugins",
-      icon: "si si-wrench",
-      subActivePaths: "/preview/backend/plugins",
+      name: "Document Management",
+      icon: "si si-docs",
+      subActivePaths: "/documents",
       sub: [
         {
-          name: "Image Cropper",
-          to: "/preview/backend/plugins/image-cropper",
+          name: "My Documents",
+          to: "/documents",
         },
         {
-          name: "Charts",
-          to: "/preview/backend/plugins/charts",
+          name: "Upload",
+          to: "/documents/upload",
         },
         {
-          name: "Calendar",
-          to: "/preview/backend/plugins/calendar",
-        },
-        {
-          name: "Carousel",
-          to: "/preview/backend/plugins/carousel",
-        },
-        {
-          name: "Offcanvas",
-          to: "/preview/backend/plugins/offcanvas",
-        },
-        {
-          name: "Syntax Highlighting",
-          to: "/preview/backend/plugins/syntax-highlighting",
-        },
-        {
-          name: "Rating",
-          to: "/preview/backend/plugins/rating",
-        },
-        {
-          name: "Dialogs",
-          to: "/preview/backend/plugins/dialogs",
-        },
-        {
-          name: "Notifications",
-          to: "/preview/backend/plugins/notifications",
-        },
-        {
-          name: "Gallery",
-          to: "/preview/backend/plugins/gallery",
+          name: "Shared",
+          to: "/documents/shared",
         },
       ],
     },
     {
-      name: "Layout",
-      icon: "si si-magic-wand",
-      subActivePaths: "/preview/backend/layout",
-      sub: [
-        {
-          name: "Page",
-          subActivePaths: "/preview/backend/layout/page",
-          sub: [
-            {
-              name: "Default",
-              to: "/preview/backend/layout/page/default",
-            },
-            {
-              name: "Flipped",
-              to: "/preview/backend/layout/page/flipped",
-            },
-          ],
-        },
-        {
-          name: "Dark Mode",
-          subActivePaths: "/preview/backend/layout/dark-mode",
-          sub: [
-            {
-              name: "On",
-              to: "/preview/backend/layout/dark-mode/on",
-            },
-            {
-              name: "Off",
-              to: "/preview/backend/layout/dark-mode/off",
-            },
-            {
-              name: "System",
-              to: "/preview/backend/layout/dark-mode/system",
-            },
-          ],
-        },
-        {
-          name: "Main Content",
-          subActivePaths: "/preview/backend/layout/main-content",
-          sub: [
-            {
-              name: "Full Width",
-              to: "/preview/backend/layout/main-content/full-width",
-            },
-            {
-              name: "Narrow",
-              to: "/preview/backend/layout/main-content/narrow",
-            },
-            {
-              name: "Boxed",
-              to: "/preview/backend/layout/main-content/boxed",
-            },
-          ],
-        },
-        {
-          name: "Header",
-          subActivePaths: "/preview/backend/layout/header",
-          sub: [
-            {
-              name: "Fixed",
-              heading: true,
-            },
-            {
-              name: "Light",
-              to: "/preview/backend/layout/header/fixed-light",
-            },
-            {
-              name: "Dark",
-              to: "/preview/backend/layout/header/fixed-dark",
-            },
-            {
-              name: "Static",
-              heading: true,
-            },
-            {
-              name: "Light",
-              to: "/preview/backend/layout/header/static-light",
-            },
-            {
-              name: "Dark",
-              to: "/preview/backend/layout/header/static-dark",
-            },
-          ],
-        },
-        {
-          name: "Sidebar",
-          subActivePaths: "/preview/backend/layout/sidebar",
-          sub: [
-            {
-              name: "Mini",
-              to: "/preview/backend/layout/sidebar/mini",
-            },
-            {
-              name: "Light",
-              to: "/preview/backend/layout/sidebar/light",
-            },
-            {
-              name: "Dark",
-              to: "/preview/backend/layout/sidebar/dark",
-            },
-            {
-              name: "Hidden",
-              to: "/preview/backend/layout/sidebar/hidden",
-            },
-          ],
-        },
-        {
-          name: "Side Overlay",
-          subActivePaths: "/preview/backend/layout/side-overlay",
-          sub: [
-            {
-              name: "Visible",
-              to: "/preview/backend/layout/side-overlay/visible",
-            },
-            {
-              name: "Hover Mode",
-              to: "/preview/backend/layout/side-overlay/hover-mode",
-            },
-            {
-              name: "No Page Overlay",
-              to: "/preview/backend/layout/side-overlay/no-page-overlay",
-            },
-          ],
-        },
-        {
-          name: "Loaders",
-          to: "/preview/backend/layout/loaders",
-        },
-        {
-          name: "API",
-          to: "/preview/backend/layout/api",
-        },
-      ],
+      name: "Knowledge Base",
+      to: "/knowledge-base",
+      icon: "si si-book-open",
     },
     {
-      name: "Multi Level Menu",
-      icon: "si si-puzzle",
-      sub: [
-        {
-          name: "Link 1-1",
-          to: "#",
-        },
-        {
-          name: "Link 1-2",
-          to: "#",
-        },
-        {
-          name: "Sub Level 2",
-          sub: [
-            {
-              name: "Link 2-1",
-              to: "#",
-            },
-            {
-              name: "Link 2-2",
-              to: "#",
-            },
-            {
-              name: "Sub Level 3",
-              sub: [
-                {
-                  name: "Link 4-1",
-                  to: "#",
-                },
-                {
-                  name: "Link 4-2",
-                  to: "#",
-                },
-                {
-                  name: "Sub Level 5",
-                  sub: [
-                    {
-                      name: "Link 5-1",
-                      to: "#",
-                    },
-                    {
-                      name: "Link 5-2",
-                      to: "#",
-                    },
-                    {
-                      name: "Sub Level 6",
-                      sub: [
-                        {
-                          name: "Link 6-1",
-                          to: "#",
-                        },
-                        {
-                          name: "Link 6-2",
-                          to: "#",
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: "Pages",
+      name: "Settings",
       heading: true,
     },
     {
-      name: "Generic",
-      icon: "si si-layers",
-      subActivePaths: "/preview/backend/pages/generic",
-      sub: [
-        {
-          name: "Blank",
-          to: "/preview/backend/pages/generic/blank",
-        },
-        {
-          name: "Blank (Block)",
-          to: "/preview/backend/pages/generic/blank-block",
-        },
-        {
-          name: "Search",
-          to: "/preview/backend/pages/generic/search",
-        },
-        {
-          name: "Profile",
-          to: "/preview/backend/pages/generic/profile",
-        },
-        {
-          name: "Profile Edit",
-          to: "/preview/backend/pages/generic/profile-edit",
-        },
-        {
-          name: "Invoice",
-          to: "/preview/backend/pages/generic/invoice",
-        },
-        {
-          name: "Pricing Plans",
-          to: "/preview/backend/pages/generic/pricing-plans",
-        },
-        {
-          name: "FAQ",
-          to: "/preview/backend/pages/generic/faq",
-        },
-        {
-          name: "Team",
-          to: "/preview/backend/pages/generic/team",
-        },
-        {
-          name: "Contact",
-          to: "/preview/backend/pages/generic/contact",
-        },
-        {
-          name: "Support",
-          to: "/preview/backend/pages/generic/support",
-        },
-        {
-          name: "Inbox",
-          to: "/preview/backend/pages/generic/inbox",
-        },
-        {
-          name: "Sidebar with Mini Nav",
-          to: "/preview/backend/pages/generic/sidebar-mini-nav",
-        },
-        {
-          name: "Maintenance",
-          to: "/preview/specials/maintenance",
-        },
-        {
-          name: "Status",
-          to: "/preview/specials/status",
-        },
-        {
-          name: "Installation",
-          to: "/preview/specials/installation",
-        },
-        {
-          name: "Checkout",
-          to: "/preview/specials/checkout",
-        },
-        {
-          name: "Coming Soon",
-          to: "/preview/specials/coming-soon",
-        },
-      ],
+      name: "User Profile",
+      icon: "si si-user",
+      to: "/profile",
     },
     {
-      name: "Authentication",
-      icon: "si si-lock",
-      subActivePaths: "/preview/backend/pages/auth",
+      name: "System",
+      icon: "si si-settings",
+      subActivePaths: "/settings",
       sub: [
         {
-          name: "All",
-          to: "/preview/backend/pages/auth",
+          name: "General",
+          to: "/settings/general",
         },
         {
-          name: "Sign In",
-          to: "/preview/auth/signin",
+          name: "Appearance",
+          to: "/settings/appearance",
         },
         {
-          name: "Sign In 2",
-          to: "/preview/auth/signin2",
+          name: "Security",
+          to: "/settings/security",
         },
         {
-          name: "Sign In 3",
-          to: "/preview/auth/signin3",
-        },
-        {
-          name: "Sign Up",
-          to: "/preview/auth/signup",
-        },
-        {
-          name: "Sign Up 2",
-          to: "/preview/auth/signup2",
-        },
-        {
-          name: "Sign Up 3",
-          to: "/preview/auth/signup3",
-        },
-        {
-          name: "Lock Screen",
-          to: "/preview/auth/lock",
-        },
-        {
-          name: "Lock Screen 2",
-          to: "/preview/auth/lock2",
-        },
-        {
-          name: "Lock Screen 3",
-          to: "/preview/auth/lock3",
-        },
-        {
-          name: "Pass Reminder",
-          to: "/preview/auth/reminder",
-        },
-        {
-          name: "Pass Reminder 2",
-          to: "/preview/auth/reminder2",
-        },
-        {
-          name: "Pass Reminder 3",
-          to: "/preview/auth/reminder3",
-        },
-        {
-          name: "Two Factor",
-          to: "/preview/auth/two-factor",
-        },
-        {
-          name: "Two Factor 2",
-          to: "/preview/auth/two-factor2",
-        },
-        {
-          name: "Two Factor 3",
-          to: "/preview/auth/two-factor3",
-        },
-      ],
-    },
-    {
-      name: "Error Pages",
-      icon: "si si-fire",
-      subActivePaths: "/preview/backend/pages/errors",
-      sub: [
-        {
-          name: "All",
-          to: "/preview/backend/pages/errors",
-        },
-        {
-          name: "400",
-          to: "/preview/errors/400",
-        },
-        {
-          name: "401",
-          to: "/preview/errors/401",
-        },
-        {
-          name: "403",
-          to: "/preview/errors/403",
-        },
-        {
-          name: "404",
-          to: "/preview/errors/404",
-        },
-        {
-          name: "500",
-          to: "/preview/errors/500",
-        },
-        {
-          name: "503",
-          to: "/preview/errors/503",
+          name: "Integrations",
+          to: "/settings/integrations",
         },
       ],
     },
   ],
-  boxed: [
+
+    boxed: [
     {
-      name: "Dashboard",
+      name: "Dashboard-TEST",
       to: "/preview/backend-boxed/",
       icon: "si si-compass",
     },
