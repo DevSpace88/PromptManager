@@ -40,6 +40,7 @@ const providers = [
   { value: 'openai', label: 'OpenAI', icon: 'fa-brain' },
   { value: 'anthropic', label: 'Anthropic', icon: 'fa-robot' },
   { value: 'google', label: 'Google Gemini', icon: 'fa-microchip' },
+  { value: 'deepseek', label: 'DeepSeek', icon: 'fa-network-wired' },
   { value: 'ollama', label: 'Ollama (Local)', icon: 'fa-server' }
 ];
 
@@ -129,9 +130,177 @@ onMounted(() => {
 
   <div class="content">
     <!-- API Keys Overview -->
-    <div class="row">
-      <div class="col-md-6 col-xl-3" v-for="provider in providers" :key="provider.value">
-        <BaseBlock class="h-100 mb-0">
+<!--    <div class="row">-->
+<!--      <div class="col-md-6 col-xl-3" v-for="provider in providers" :key="provider.value">-->
+<!--        <BaseBlock class="h-100 mb-0">-->
+<!--          <template #title>-->
+<!--            <i :class="`fa ${provider.icon} me-1 text-muted`"></i> {{ provider.label }}-->
+<!--          </template>-->
+<!--          <template #options>-->
+<!--            <button-->
+<!--              type="button"-->
+<!--              class="btn-block-option"-->
+<!--              @click="-->
+<!--                addKeyForm.provider = provider.value;-->
+<!--                openAddKeyModal();-->
+<!--              "-->
+<!--            >-->
+<!--              <i class="fa fa-plus"></i>-->
+<!--            </button>-->
+<!--          </template>-->
+
+<!--          <div v-if="apiKeys.filter(key => key.provider === provider.value).length === 0" class="py-3 text-center">-->
+<!--            <div class="text-muted mb-2">No API keys configured</div>-->
+<!--            <button-->
+<!--              type="button"-->
+<!--              class="btn btn-sm btn-alt-primary"-->
+<!--              @click="-->
+<!--                addKeyForm.provider = provider.value;-->
+<!--                openAddKeyModal();-->
+<!--              "-->
+<!--              v-click-ripple-->
+<!--            >-->
+<!--              <i class="fa fa-plus me-1"></i> Add Key-->
+<!--            </button>-->
+<!--          </div>-->
+
+<!--          <div v-else>-->
+<!--            <div-->
+<!--              v-for="key in apiKeys.filter(key => key.provider === provider.value)"-->
+<!--              :key="key.id"-->
+<!--              class="d-flex align-items-center justify-content-between py-2"-->
+<!--            >-->
+<!--              <div>-->
+<!--                <div class="fw-medium d-flex align-items-center">-->
+<!--                  {{ key.label || 'Unnamed Key' }}-->
+<!--                  <span v-if="key.is_default" class="badge bg-success ms-2">Default</span>-->
+<!--                </div>-->
+<!--                <div class="fs-sm text-muted">{{ key.masked_key }}</div>-->
+<!--              </div>-->
+<!--              <div class="btn-group">-->
+<!--                <button-->
+<!--                  type="button"-->
+<!--                  class="btn btn-sm btn-alt-secondary"-->
+<!--                  @click="openEditKeyModal(key)"-->
+<!--                  title="Edit"-->
+<!--                >-->
+<!--                  <i class="fa fa-pencil-alt"></i>-->
+<!--                </button>-->
+<!--                <button-->
+<!--                  type="button"-->
+<!--                  class="btn btn-sm btn-alt-danger"-->
+<!--                  @click="confirmKeyDeletion(key)"-->
+<!--                  title="Delete"-->
+<!--                >-->
+<!--                  <i class="fa fa-times"></i>-->
+<!--                </button>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </BaseBlock>-->
+<!--      </div>-->
+<!--    </div>-->
+
+    <!-- API Configuration Guides -->
+<!--    <BaseBlock title="API Configuration Guides" class="my-4">-->
+<!--      <div class="row items-push">-->
+<!--        <div class="col-md-6 col-xl-3 py-4">-->
+<!--          <div class="d-flex">-->
+<!--            <div class="flex-shrink-0 me-3">-->
+<!--              <div class="item item-rounded bg-body">-->
+<!--                <i class="fa fa-brain text-primary"></i>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--            <div class="flex-grow-1">-->
+<!--              <h4 class="fs-md fw-semibold mb-1">OpenAI API</h4>-->
+<!--              <p class="text-muted fs-sm mb-2">-->
+<!--                Create API keys in the OpenAI platform to access GPT models.-->
+<!--              </p>-->
+<!--              <a href="https://platform.openai.com/api-keys" target="_blank" class="btn btn-sm btn-alt-primary">-->
+<!--                <i class="fa fa-external-link-alt me-1"></i> Get Key-->
+<!--              </a>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        <div class="col-md-6 col-xl-3 py-4 ">-->
+<!--          <div class="d-flex">-->
+<!--            <div class="flex-shrink-0 me-3">-->
+<!--              <div class="item item-rounded bg-body">-->
+<!--                <i class="fa fa-robot text-info"></i>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--            <div class="flex-grow-1">-->
+<!--              <h4 class="fs-md fw-semibold mb-1">Anthropic API</h4>-->
+<!--              <p class="text-muted fs-sm mb-2">-->
+<!--                Get API keys for Claude models via the Anthropic console.-->
+<!--              </p>-->
+<!--              <a href="https://console.anthropic.com/keys" target="_blank" class="btn btn-sm btn-alt-info">-->
+<!--                <i class="fa fa-external-link-alt me-1"></i> Get Key-->
+<!--              </a>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        <div class="col-md-6 col-xl-3 py-4">-->
+<!--          <div class="d-flex">-->
+<!--            <div class="flex-shrink-0 me-3">-->
+<!--              <div class="item item-rounded bg-body">-->
+<!--                <i class="fa fa-microchip text-danger"></i>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--            <div class="flex-grow-1">-->
+<!--              <h4 class="fs-md fw-semibold mb-1">Google AI</h4>-->
+<!--              <p class="text-muted fs-sm mb-2">-->
+<!--                Access Gemini models with a Google AI API key.-->
+<!--              </p>-->
+<!--              <a href="https://ai.google.dev/" target="_blank" class="btn btn-sm btn-alt-danger">-->
+<!--                <i class="fa fa-external-link-alt me-1"></i> Get Key-->
+<!--              </a>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        <div class="col-md-6 col-xl-3 py-4">-->
+<!--          <div class="d-flex">-->
+<!--            <div class="flex-shrink-0 me-3">-->
+<!--              <div class="item item-rounded bg-body">-->
+<!--                <i class="fa fa-network-wired text-success"></i>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--            <div class="flex-grow-1">-->
+<!--              <h4 class="fs-md fw-semibold mb-1">DeepSeek</h4>-->
+<!--              <p class="text-muted fs-sm mb-2">-->
+<!--                Access DeepSeek models with your API key from the platform.-->
+<!--              </p>-->
+<!--              <a href="https://platform.deepseek.com/api_keys" target="_blank" class="btn btn-sm btn-alt-success">-->
+<!--                <i class="fa fa-external-link-alt me-1"></i> Get Key-->
+<!--              </a>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        <div class="col-md-6 col-xl-3 py-4">-->
+<!--          <div class="d-flex">-->
+<!--            <div class="flex-shrink-0 me-3">-->
+<!--              <div class="item item-rounded bg-body">-->
+<!--                <i class="fa fa-server text-warning"></i>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--            <div class="flex-grow-1">-->
+<!--              <h4 class="fs-md fw-semibold mb-1">Ollama</h4>-->
+<!--              <p class="text-muted fs-sm mb-2">-->
+<!--                For Ollama, enter your local server URL as the "key".-->
+<!--              </p>-->
+<!--              <a href="https://ollama.com/download" target="_blank" class="btn btn-sm btn-alt-warning">-->
+<!--                <i class="fa fa-external-link-alt me-1"></i> Install Ollama-->
+<!--              </a>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </BaseBlock>-->
+
+    <!-- API Keys Overview -->
+    <div class="row g-3">
+      <div class="col" v-for="provider in providers" :key="provider.value">
+        <BaseBlock class="h-100">
           <template #title>
             <i :class="`fa ${provider.icon} me-1 text-muted`"></i> {{ provider.label }}
           </template>
@@ -140,9 +309,9 @@ onMounted(() => {
               type="button"
               class="btn-block-option"
               @click="
-                addKeyForm.provider = provider.value;
-                openAddKeyModal();
-              "
+            addKeyForm.provider = provider.value;
+            openAddKeyModal();
+          "
             >
               <i class="fa fa-plus"></i>
             </button>
@@ -154,9 +323,9 @@ onMounted(() => {
               type="button"
               class="btn btn-sm btn-alt-primary"
               @click="
-                addKeyForm.provider = provider.value;
-                openAddKeyModal();
-              "
+            addKeyForm.provider = provider.value;
+            openAddKeyModal();
+          "
               v-click-ripple
             >
               <i class="fa fa-plus me-1"></i> Add Key
@@ -202,18 +371,18 @@ onMounted(() => {
 
     <!-- API Configuration Guides -->
     <BaseBlock title="API Configuration Guides" class="my-4">
-      <div class="row items-push">
-        <div class="col-md-6 col-xl-3 py-4">
+      <div class="row items-push justify-content-center">
+        <div class="col-lg py-3 px-4">
           <div class="d-flex">
             <div class="flex-shrink-0 me-3">
-              <div class="item item-rounded bg-body">
+              <div class="item item-rounded bg-body-light">
                 <i class="fa fa-brain text-primary"></i>
               </div>
             </div>
             <div class="flex-grow-1">
               <h4 class="fs-md fw-semibold mb-1">OpenAI API</h4>
               <p class="text-muted fs-sm mb-2">
-                Create API keys in the OpenAI platform to access GPT models.
+                Create API keys to access GPT models.
               </p>
               <a href="https://platform.openai.com/api-keys" target="_blank" class="btn btn-sm btn-alt-primary">
                 <i class="fa fa-external-link-alt me-1"></i> Get Key
@@ -221,17 +390,17 @@ onMounted(() => {
             </div>
           </div>
         </div>
-        <div class="col-md-6 col-xl-3 py-4 ">
+        <div class="col-lg py-3 px-4">
           <div class="d-flex">
             <div class="flex-shrink-0 me-3">
-              <div class="item item-rounded bg-body">
+              <div class="item item-rounded bg-body-light">
                 <i class="fa fa-robot text-info"></i>
               </div>
             </div>
             <div class="flex-grow-1">
               <h4 class="fs-md fw-semibold mb-1">Anthropic API</h4>
               <p class="text-muted fs-sm mb-2">
-                Get API keys for Claude models via the Anthropic console.
+                Access Claude models via Anthropic.
               </p>
               <a href="https://console.anthropic.com/keys" target="_blank" class="btn btn-sm btn-alt-info">
                 <i class="fa fa-external-link-alt me-1"></i> Get Key
@@ -239,17 +408,17 @@ onMounted(() => {
             </div>
           </div>
         </div>
-        <div class="col-md-6 col-xl-3 py-4">
+        <div class="col-lg py-3 px-4">
           <div class="d-flex">
             <div class="flex-shrink-0 me-3">
-              <div class="item item-rounded bg-body">
+              <div class="item item-rounded bg-body-light">
                 <i class="fa fa-microchip text-danger"></i>
               </div>
             </div>
             <div class="flex-grow-1">
               <h4 class="fs-md fw-semibold mb-1">Google AI</h4>
               <p class="text-muted fs-sm mb-2">
-                Access Gemini models with a Google AI API key.
+                Connect to Gemini models.
               </p>
               <a href="https://ai.google.dev/" target="_blank" class="btn btn-sm btn-alt-danger">
                 <i class="fa fa-external-link-alt me-1"></i> Get Key
@@ -257,20 +426,38 @@ onMounted(() => {
             </div>
           </div>
         </div>
-        <div class="col-md-6 col-xl-3 py-4">
+        <div class="col-lg py-3 px-4">
           <div class="d-flex">
             <div class="flex-shrink-0 me-3">
-              <div class="item item-rounded bg-body">
+              <div class="item item-rounded bg-body-light">
+                <i class="fa fa-network-wired text-success"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1">
+              <h4 class="fs-md fw-semibold mb-1">DeepSeek</h4>
+              <p class="text-muted fs-sm mb-2">
+                Access DeepSeek AI models.
+              </p>
+              <a href="https://platform.deepseek.com/api_keys" target="_blank" class="btn btn-sm btn-alt-success">
+                <i class="fa fa-external-link-alt me-1"></i> Get Key
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg py-3 px-4">
+          <div class="d-flex">
+            <div class="flex-shrink-0 me-3">
+              <div class="item item-rounded bg-body-light">
                 <i class="fa fa-server text-warning"></i>
               </div>
             </div>
             <div class="flex-grow-1">
               <h4 class="fs-md fw-semibold mb-1">Ollama</h4>
               <p class="text-muted fs-sm mb-2">
-                For Ollama, enter your local server URL as the "key".
+                Run models locally.
               </p>
               <a href="https://ollama.com/download" target="_blank" class="btn btn-sm btn-alt-warning">
-                <i class="fa fa-external-link-alt me-1"></i> Install Ollama
+                <i class="fa fa-external-link-alt me-1"></i> Install
               </a>
             </div>
           </div>

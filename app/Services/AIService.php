@@ -30,6 +30,7 @@ class AIService
             'anthropic' => $this->callAnthropic($apiKey, $model, $prompt, $temperature, $maxTokens),
             'google' => $this->callGoogle($apiKey, $model, $prompt, $temperature, $maxTokens),
             'ollama' => $this->callOllama($apiKey, $model, $prompt, $temperature, $maxTokens),
+            'deepseek' => $this->callDeepSeek($apiKey, $model, $prompt, $temperature, $maxTokens),
             default => [
                 'error' => true,
                 'message' => "Unsupported provider: {$provider}",
@@ -208,6 +209,57 @@ class AIService
             return [
                 'error' => true,
                 'message' => 'Google AI API exception: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Call DeepSeek API
+     */
+    protected function callDeepSeek(string $apiKey, string $model, string $prompt, float $temperature, int $maxTokens)
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$apiKey}",
+                'Content-Type' => 'application/json',
+            ])->post('https://api.deepseek.com/v1/chat/completions', [
+                'model' => $model,
+                'messages' => [
+                    ['role' => 'user', 'content' => $prompt]
+                ],
+                'temperature' => $temperature,
+                'max_tokens' => $maxTokens,
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return [
+                    'error' => false,
+                    'text' => $data['choices'][0]['message']['content'],
+                    'model' => $model,
+                    'provider' => 'deepseek',
+                    'raw_response' => $data,
+                ];
+            } else {
+                Log::error('DeepSeek API error', [
+                    'status' => $response->status(),
+                    'response' => $response->json(),
+                ]);
+
+                return [
+                    'error' => true,
+                    'message' => 'DeepSeek API error: ' . ($response->json()['error']['message'] ?? 'Unknown error'),
+                    'status' => $response->status(),
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('DeepSeek API exception', [
+                'exception' => $e->getMessage(),
+            ]);
+
+            return [
+                'error' => true,
+                'message' => 'DeepSeek API exception: ' . $e->getMessage(),
             ];
         }
     }
