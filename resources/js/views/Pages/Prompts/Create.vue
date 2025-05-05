@@ -4,7 +4,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 
 // Pfade korrigieren basierend auf dem, was in anderen Dateien verwendet wird
 // Beachte: layouts ist kleingeschrieben in anderen Dateien
-import MonacoEditor from '@/Components/MonacoEditor.vue';
+// import MonacoEditor from '@/Components/MonacoEditor.vue';
 // BaseLayout entfernen, da es nicht verwendet wird
 // import BasePageHeading aus den Imports entfernen, da es möglicherweise Probleme verursacht
 

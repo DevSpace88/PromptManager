@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import MonacoEditor from '@/components/MonacoEditor.vue';
+// import MonacoEditor from '@/components/MonacoEditor.vue';
 
 // Props to receive the existing prompt data
 const props = defineProps({
