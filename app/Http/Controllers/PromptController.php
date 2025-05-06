@@ -141,6 +141,28 @@ class PromptController extends Controller
             ->with('success', 'Prompt deleted successfully.');
     }
 
+
+    public function getVersions(Prompt $prompt)
+    {
+        if ($prompt->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $versions = $prompt->versions()
+            ->orderBy('version', 'desc')
+            ->get()
+            ->map(function ($version) {
+                return [
+                    'id' => $version->id,
+                    'version' => $version->version,
+                    'created_at' => $version->created_at,
+                    'is_current' => $version->is_current,
+                ];
+            });
+
+        return response()->json(['versions' => $versions]);
+    }
+
     public function setVersion(Request $request, Prompt $prompt, PromptVersion $version)
     {
         if ($prompt->user_id !== Auth::id()) {
@@ -158,6 +180,32 @@ class PromptController extends Controller
         // Set this version as current
         $version->update(['is_current' => true]);
 
+        // Touch the prompt to update its updated_at timestamp
+        $prompt->touch();
+
+        // Redirect zurück mit Erfolgsmeldung
         return redirect()->back()->with('success', 'Version set as current.');
+//        return redirect()->route('prompts.show', $prompt);
+
     }
+
+    public function previewVersion(Prompt $prompt, PromptVersion $version)
+    {
+        if ($prompt->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Ensure the version belongs to this prompt
+        if ($version->prompt_id !== $prompt->id) {
+            abort(400, 'Invalid version');
+        }
+
+        return response()->json([
+            'content' => $version->content,
+            'variables' => $version->variables,
+            'version' => $version->version,
+            'created_at' => $version->created_at,
+        ]);
+    }
+
 }
