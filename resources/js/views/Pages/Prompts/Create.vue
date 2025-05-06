@@ -3,7 +3,6 @@ import { ref, computed, watch } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useSortable } from '@/Composables/useSortable';
 
-// Form initialization
 const form = useForm({
   title: '',
   description: '',

@@ -2257,7 +2257,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import BasePageHeading from '@/components/BasePageHeading.vue';
-import WorkflowEditor from '../../../Components/WorkflowEditor.vue'; // Pfad anpassen
+import WorkflowEditor from "@/components/WorkflowEditor.vue";
 
 // Props
 const props = defineProps({
