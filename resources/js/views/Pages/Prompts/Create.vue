@@ -135,8 +135,7 @@ const generateImprovedPrompt = async (section) => {
   activeSection.value = section;
 
   try {
-    // This is a placeholder - in a real implementation, you would call your backend API
-    const response = await fetch('/api/generate-improved-prompt', {
+    const response = await fetch('/api/prompts/enhance', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

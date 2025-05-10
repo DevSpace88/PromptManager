@@ -40,6 +40,7 @@ class PlaygroundController extends Controller
         return Inertia::render('Pages/Playground/Show', [
             'prompt' => $prompt,
             'currentVersion' => $prompt->currentVersion(),
+            'versions' => $prompt->versions,
         ]);
     }
 
