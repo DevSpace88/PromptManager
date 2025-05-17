@@ -1,8 +1,7 @@
 <script setup>
-
-import { ref, computed, watch, onMounted } from 'vue';
-import { Head, Link, useForm, router } from '@inertiajs/vue3';
-import { useSortable } from '@/Composables/useSortable';
+import { ref, computed, watch, onMounted } from "vue";
+import { Head, Link, useForm, router } from "@inertiajs/vue3";
+import { useSortable } from "@/composables/useSortable";
 
 // Props to receive the existing prompt data
 const props = defineProps({
@@ -12,15 +11,15 @@ const props = defineProps({
 
 // Initialize form with existing prompt values
 const form = useForm({
-  title: props.prompt?.title || '',
-  description: props.prompt?.description || '',
-  content: props.currentVersion?.content || '',
+  title: props.prompt?.title || "",
+  description: props.prompt?.description || "",
+  content: props.currentVersion?.content || "",
   tags: props.prompt?.tags || [],
-  prompt_sections: []
+  prompt_sections: [],
 });
 
 // For handling tag inputs
-const newTag = ref('');
+const newTag = ref("");
 const extractedVariables = ref([]);
 const isAiGenerating = ref(false);
 const activeSection = ref(null);
@@ -44,7 +43,7 @@ useSortable(sectionsContainer, {
     newSections.splice(event.newIndex, 0, movedItem);
     form.prompt_sections = newSections;
     updatePromptContent();
-  }
+  },
 });
 
 onMounted(async () => {
@@ -56,7 +55,7 @@ onMounted(async () => {
   // Der Versionsvorschau-Modal wird automatisch initialisiert
   setTimeout(() => {
     try {
-      const modalElement = document.getElementById('modal-version-preview');
+      const modalElement = document.getElementById("modal-version-preview");
       if (modalElement) {
         const modal = new bootstrap.Modal(modalElement);
 
@@ -68,12 +67,12 @@ onMounted(async () => {
         });
 
         // Wenn das Modal geschlossen wird, setze showVersionModal zurück
-        modalElement.addEventListener('hidden.bs.modal', () => {
+        modalElement.addEventListener("hidden.bs.modal", () => {
           showVersionModal.value = false;
         });
       }
     } catch (e) {
-      console.error('Modal initialization error:', e);
+      console.error("Modal initialization error:", e);
     }
   }, 500);
 });
@@ -83,15 +82,15 @@ const loadVersions = async () => {
   isLoadingVersions.value = true;
 
   try {
-    const response = await fetch(route('prompts.versions', props.prompt.id));
+    const response = await fetch(route("prompts.versions", props.prompt.id));
     if (response.ok) {
       const data = await response.json();
       versions.value = data.versions;
     } else {
-      console.error('Failed to load versions');
+      console.error("Failed to load versions");
     }
   } catch (error) {
-    console.error('Error loading versions:', error);
+    console.error("Error loading versions:", error);
   } finally {
     isLoadingVersions.value = false;
   }
@@ -104,129 +103,108 @@ const previewVersion = async (versionId) => {
   isPreviewingVersion.value = true;
 
   try {
-    const response = await fetch(route('prompts.versions.preview', {
-      prompt: props.prompt.id,
-      version: versionId
-    }));
+    const response = await fetch(
+      route("prompts.versions.preview", {
+        prompt: props.prompt.id,
+        version: versionId,
+      }),
+    );
 
     if (response.ok) {
       const data = await response.json();
       versionPreview.value = data;
       showVersionModal.value = true;
     } else {
-      console.error('Failed to preview version');
+      console.error("Failed to preview version");
     }
   } catch (error) {
-    console.error('Error previewing version:', error);
+    console.error("Error previewing version:", error);
   } finally {
     isPreviewingVersion.value = false;
   }
 };
 
-// Set a specific version as current
-// const setVersionAsCurrent = (versionId) => {
-//   if (!confirm('Möchtest du diese Version aktivieren? Nicht gespeicherte Änderungen gehen verloren.')) {
-//     return;
-//   }
-//
-//   // Die Version-ID muss explizit mitgegeben werden
-//   const params = {
-//     prompt: props.prompt.id,
-//     version: versionId
-//   };
-//
-//   // Wir verwenden hier die Form-Submit-Methode, da sie zuverlässiger ist
-//   const form = document.createElement('form');
-//   form.method = 'POST';
-//   form.action = route('prompts.versions.set-current', params);
-//
-//   // CSRF-Token hinzufügen
-//   const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-//   const csrfInput = document.createElement('input');
-//   csrfInput.type = 'hidden';
-//   csrfInput.name = '_token';
-//   csrfInput.value = csrfToken;
-//   form.appendChild(csrfInput);
-//
-//   // Method-Spoofing für Laravel
-//   const methodInput = document.createElement('input');
-//   methodInput.type = 'hidden';
-//   methodInput.name = '_method';
-//   methodInput.value = 'POST';
-//   form.appendChild(methodInput);
-//
-//   // Formular zum DOM hinzufügen und absenden
-//   document.body.appendChild(form);
-//   form.submit();
-// };
-
-
-// const setVersionAsCurrent = (versionId) => {
-//   if (!confirm('Möchtest du diese Version aktivieren? Nicht gespeicherte Änderungen gehen verloren.')) {
-//     return;
-//   }
-//
-//   router.post(route('prompts.versions.set-current', {
-//     prompt: props.prompt.id,
-//     version: versionId
-//   })).then(() => {
-//     // Nach erfolgreichem Request die Seite neu laden
-//     router.reload();
-//   }).catch(error => {
-//     console.error('Fehler beim Setzen der Version:', error);
-//   });
-// };
-
-
 const setVersionAsCurrent = (versionId) => {
-  if (!confirm('Möchtest du diese Version aktivieren? Nicht gespeicherte Änderungen gehen verloren.')) {
+  console.log(
+    "[Edit.vue] setVersionAsCurrent aufgerufen mit versionId:",
+    versionId,
+  );
+  if (
+    !confirm(
+      "Möchtest du diese Version aktivieren? Nicht gespeicherte Änderungen gehen verloren.",
+    )
+  ) {
+    console.log("[Edit.vue] Bestätigung abgelehnt.");
     return;
   }
 
   const params = {
     prompt: props.prompt.id,
-    version: versionId
+    version: versionId,
   };
+  console.log("[Edit.vue] Parameter für router.post:", params);
 
-  // Methode 1: Mit Axios
-  // Axios setzt automatisch den X-XSRF-TOKEN aus den Cookies
-  axios.post(route('prompts.versions.set-current', params))
-    .then(() => {
-      window.location.reload(); // Seite neu laden
-    })
-    .catch(error => {
-      console.error('Fehler beim Setzen der Version:', error);
-    });
+  router.post(route("prompts.versions.set-current", params), {
+    preserveState: false, // Wichtig für Inertia, um Props neu zu laden
+    preserveScroll: true,
+    onSuccess: () => {
+      // Props (currentVersion, prompt) sollten von Inertia aktualisiert worden sein.
+      // Formular basierend auf den neuen Props aktualisieren.
+      if (props.prompt) {
+        form.title = props.prompt.title || "";
+        form.description = props.prompt.description || "";
+        form.tags = props.prompt.tags || [];
+      }
+      if (props.currentVersion) {
+        form.content = props.currentVersion.content || "";
+        selectedVersionId.value = props.currentVersion.id;
+      }
 
-  // ODER Methode 2: Mit Formular-Submit (keine CSRF-Token-Abfrage nötig)
-  // const form = document.createElement('form');
-  // form.method = 'POST';
-  // form.action = route('prompts.versions.set-current', params);
-  //
-  // // Method-Spoofing für Laravel
-  // const methodInput = document.createElement('input');
-  // methodInput.type = 'hidden';
-  // methodInput.name = '_method';
-  // methodInput.value = 'POST';
-  // form.appendChild(methodInput);
-  //
-  // // Formular zum DOM hinzufügen und absenden
-  // document.body.appendChild(form);
-  // form.submit();
+      initSectionsFromContent(); // Editor-Sektionen basierend auf form.content neu initialisieren
+      extractVariables(form.content); // Variablen neu extrahieren
+
+      loadVersions(); // Versionsliste (für Seitenleiste) neu laden, um is_current zu aktualisieren
+
+      // Modal schließen, falls offen
+      console.log(
+        "[Edit.vue] onSuccess: showVersionModal.value ist",
+        showVersionModal.value,
+      );
+      if (showVersionModal.value) {
+        const modalElement = document.getElementById("modal-version-preview");
+        console.log("[Edit.vue] onSuccess: modalElement ist", modalElement);
+        if (modalElement) {
+          const modalInstance = bootstrap.Modal.getInstance(modalElement);
+          console.log("[Edit.vue] onSuccess: modalInstance ist", modalInstance);
+          if (modalInstance) {
+            console.log("[Edit.vue] onSuccess: Aufruf modalInstance.hide()");
+            modalInstance.hide();
+          }
+        }
+        showVersionModal.value = false;
+        console.log(
+          "[Edit.vue] onSuccess: showVersionModal.value wurde auf false gesetzt.",
+        );
+      }
+    },
+    onError: (errors) => {
+      console.error("Fehler beim Setzen der Version:", errors);
+      // Hier könnte man dem Benutzer eine Fehlermeldung anzeigen
+    },
+  });
 };
-
 
 // Format date to localized string
 const formatDate = (dateString) => {
-  if (!dateString) return '';
+  if (!dateString) return "";
 
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat('de-DE', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+  return new Intl.DateTimeFormat("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(date);
 };
 
@@ -234,7 +212,13 @@ const formatDate = (dateString) => {
 const initSectionsFromContent = () => {
   if (!form.content) {
     form.prompt_sections = [
-      { id: 1, type: 'text', content: '', is_variable: false, variable_name: '' }
+      {
+        id: 1,
+        type: "text",
+        content: "",
+        is_variable: false,
+        variable_name: "",
+      },
     ];
     return;
   }
@@ -254,10 +238,10 @@ const initSectionsFromContent = () => {
       if (textContent.trim()) {
         sections.push({
           id: idCounter++,
-          type: 'text',
+          type: "text",
           content: textContent,
           is_variable: false,
-          variable_name: ''
+          variable_name: "",
         });
       }
     }
@@ -265,10 +249,10 @@ const initSectionsFromContent = () => {
     // Add the variable
     sections.push({
       id: idCounter++,
-      type: 'text',
-      content: '',
+      type: "text",
+      content: "",
       is_variable: true,
-      variable_name: match[1].trim()
+      variable_name: match[1].trim(),
     });
 
     lastIndex = match.index + match[0].length;
@@ -280,10 +264,10 @@ const initSectionsFromContent = () => {
     if (remainingText.trim()) {
       sections.push({
         id: idCounter++,
-        type: 'text',
+        type: "text",
         content: remainingText,
         is_variable: false,
-        variable_name: ''
+        variable_name: "",
       });
     }
   }
@@ -292,10 +276,10 @@ const initSectionsFromContent = () => {
   if (sections.length === 0) {
     sections.push({
       id: idCounter++,
-      type: 'text',
+      type: "text",
       content: form.content,
       is_variable: false,
-      variable_name: ''
+      variable_name: "",
     });
   }
 
@@ -311,13 +295,18 @@ const extractVariables = (content) => {
 
   const regex = /\{\{(.*?)\}\}/g;
   const matches = [...content.matchAll(regex)];
-  extractedVariables.value = [...new Set(matches.map(match => match[1].trim()))];
+  extractedVariables.value = [
+    ...new Set(matches.map((match) => match[1].trim())),
+  ];
 };
 
 // Watch for changes in content to extract variables
-watch(() => form.content, (newContent) => {
-  extractVariables(newContent);
-});
+watch(
+  () => form.content,
+  (newContent) => {
+    extractVariables(newContent);
+  },
+);
 
 // Add new tag
 const addTag = () => {
@@ -325,13 +314,13 @@ const addTag = () => {
     if (!form.tags.includes(newTag.value.trim())) {
       form.tags.push(newTag.value.trim());
     }
-    newTag.value = '';
+    newTag.value = "";
   }
 };
 
 // Handle Enter key in tag input
 const handleTagKeydown = (e) => {
-  if (e.key === 'Enter') {
+  if (e.key === "Enter") {
     e.preventDefault();
     addTag();
   }
@@ -343,14 +332,14 @@ const removeTag = (index) => {
 };
 
 // Add a new prompt section
-const addSection = (type = 'text') => {
-  const newId = Math.max(0, ...form.prompt_sections.map(s => s.id)) + 1;
+const addSection = (type = "text") => {
+  const newId = Math.max(0, ...form.prompt_sections.map((s) => s.id)) + 1;
   form.prompt_sections.push({
     id: newId,
     type,
-    content: '',
+    content: "",
     is_variable: false,
-    variable_name: ''
+    variable_name: "",
   });
 };
 
@@ -374,7 +363,7 @@ const toggleVariable = (section) => {
 
 // Update the main prompt content from all sections
 const updatePromptContent = () => {
-  let content = '';
+  let content = "";
 
   form.prompt_sections.forEach((section) => {
     if (section.is_variable) {
@@ -382,16 +371,20 @@ const updatePromptContent = () => {
     } else {
       content += section.content;
     }
-    content += '\n';
+    content += "\n";
   });
 
   form.content = content.trim();
 };
 
 // Watch all sections for changes
-watch(() => form.prompt_sections, () => {
-  updatePromptContent();
-}, { deep: true });
+watch(
+  () => form.prompt_sections,
+  () => {
+    updatePromptContent();
+  },
+  { deep: true },
+);
 
 // Generate improved prompt with AI
 const generateImprovedPrompt = async (section) => {
@@ -402,14 +395,15 @@ const generateImprovedPrompt = async (section) => {
 
   try {
     // This is a placeholder - in a real implementation, you would call your backend API
-    const response = await fetch('/api/prompts/enhance', {
-      method: 'POST',
+    const response = await fetch("/api/prompts/enhance", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         prompt: section.content,
-        context: "Turn this into a more detailed, effective AI prompt using best practices"
+        context:
+          "Turn this into a more detailed, effective AI prompt using best practices",
       }),
     });
 
@@ -418,7 +412,7 @@ const generateImprovedPrompt = async (section) => {
       section.content = data.improved_prompt;
       updatePromptContent();
     } else {
-      console.error('Failed to generate improved prompt');
+      console.error("Failed to generate improved prompt");
       // For demo, simulate AI response
       setTimeout(() => {
         section.content = improvePromptDemo(section.content);
@@ -427,7 +421,7 @@ const generateImprovedPrompt = async (section) => {
       }, 1500);
     }
   } catch (error) {
-    console.error('Error generating improved prompt:', error);
+    console.error("Error generating improved prompt:", error);
     // For demo, simulate AI response
     setTimeout(() => {
       section.content = improvePromptDemo(section.content);
@@ -443,7 +437,7 @@ const generateImprovedPrompt = async (section) => {
 const improvePromptDemo = (originalPrompt) => {
   // This is just a demo enhancement - in a real app, this would come from your AI service
   const enhanced = originalPrompt.trim();
-  if (enhanced.toLowerCase().includes('summarize')) {
+  if (enhanced.toLowerCase().includes("summarize")) {
     return `Please provide a comprehensive summary of the following text. The summary should:
 - Capture the main ideas and key points
 - Be approximately 25% of the original length
@@ -452,10 +446,10 @@ const improvePromptDemo = (originalPrompt) => {
 - Organize information logically with clear structure
 
 Text to summarize:
-${enhanced.replace(/summarize/i, '')}`;
-  } else if (enhanced.toLowerCase().includes('write')) {
+${enhanced.replace(/summarize/i, "")}`;
+  } else if (enhanced.toLowerCase().includes("write")) {
     return `Create a well-structured, engaging piece of writing that:
-- Addresses the topic: ${enhanced.replace(/write/i, '')}
+- Addresses the topic: ${enhanced.replace(/write/i, "")}
 - Uses a professional, clear tone
 - Includes specific examples and evidence
 - Follows a logical structure with introduction, main points, and conclusion
@@ -477,7 +471,7 @@ Please provide a detailed, step-by-step response that:
 // Submit the form
 const submit = () => {
   updatePromptContent(); // Ensure content is updated before submission
-  form.put(route('prompts.update', props.prompt.id), {
+  form.put(route("prompts.update", props.prompt.id), {
     onSuccess: () => {
       // Form submission successful
     },
@@ -518,15 +512,30 @@ const submit = () => {
           <div class="block-options">
             <!-- Version Dropdown -->
             <div class="dropdown d-inline-block me-1">
-              <button type="button" class="btn btn-sm btn-alt-secondary" id="versions-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <button
+                type="button"
+                class="btn btn-sm btn-alt-secondary"
+                id="versions-dropdown"
+                data-bs-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
                 <i class="fa fa-history me-1"></i> Versionen
-                <span class="badge rounded-pill bg-primary ms-1">{{ versions.length }}</span>
+                <span class="badge rounded-pill bg-primary ms-1">{{
+                  versions.length
+                }}</span>
               </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="versions-dropdown">
+              <div
+                class="dropdown-menu dropdown-menu-end"
+                aria-labelledby="versions-dropdown"
+              >
                 <h6 class="dropdown-header">Gespeicherte Versionen</h6>
                 <div v-if="isLoadingVersions" class="dropdown-item">
                   <div class="d-flex align-items-center">
-                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    <span
+                      class="spinner-border spinner-border-sm me-2"
+                      role="status"
+                    ></span>
                     <span>Lade Versionen...</span>
                   </div>
                 </div>
@@ -534,13 +543,27 @@ const submit = () => {
                   Keine Versionen gefunden
                 </div>
                 <template v-else>
-                  <div v-for="version in versions" :key="version.id" class="dropdown-item">
-                    <div class="d-flex justify-content-between align-items-center">
+                  <div
+                    v-for="version in versions"
+                    :key="version.id"
+                    class="dropdown-item"
+                  >
+                    <div
+                      class="d-flex justify-content-between align-items-center"
+                    >
                       <div>
-                        <span class="fw-semibold">Version {{ version.version }}</span>
-                        <span v-if="version.is_current" class="badge rounded-pill bg-primary ms-1">Aktuell</span>
-                        <br>
-                        <small class="text-muted">{{ formatDate(version.created_at) }}</small>
+                        <span class="fw-semibold"
+                          >Version {{ version.version }}</span
+                        >
+                        <span
+                          v-if="version.is_current"
+                          class="badge rounded-pill bg-primary ms-1"
+                          >Aktuell</span
+                        >
+                        <br />
+                        <small class="text-muted">{{
+                          formatDate(version.created_at)
+                        }}</small>
                       </div>
                       <div>
                         <button
@@ -567,7 +590,11 @@ const submit = () => {
               </div>
             </div>
 
-            <button type="submit" class="btn btn-sm btn-alt-primary" :disabled="form.processing">
+            <button
+              type="submit"
+              class="btn btn-sm btn-alt-primary"
+              :disabled="form.processing"
+            >
               <i class="fa fa-fw fa-check opacity-50"></i> Update Prompt
             </button>
           </div>
@@ -576,10 +603,15 @@ const submit = () => {
           <div class="row items-push">
             <div class="col-lg-4">
               <p class="text-muted">
-                Update your prompt template. Use dynamic sections or the <code v-pre>{{variable_name}}</code> syntax for variables that can be dynamically replaced.
+                Update your prompt template. Use dynamic sections or the
+                <code v-pre>{{ variable_name }}</code> syntax for variables that
+                can be dynamically replaced.
               </p>
 
-              <div v-if="extractedVariables.length > 0" class="block block-rounded bg-body-light">
+              <div
+                v-if="extractedVariables.length > 0"
+                class="block block-rounded bg-body-light"
+              >
                 <div class="block-header">
                   <h3 class="block-title fs-sm">
                     <i class="fa fa-fw fa-code me-1"></i> Detected Variables
@@ -596,7 +628,8 @@ const submit = () => {
                     </span>
                   </div>
                   <p class="fs-sm text-muted mb-0">
-                    These variables will be available for input during prompt testing and workflow execution.
+                    These variables will be available for input during prompt
+                    testing and workflow execution.
                   </p>
                 </div>
               </div>
@@ -610,10 +643,16 @@ const submit = () => {
                 </div>
                 <div class="block-content p-2">
                   <div v-if="isLoadingVersions" class="text-center py-2">
-                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                    <div
+                      class="spinner-border spinner-border-sm"
+                      role="status"
+                    ></div>
                     <span class="ms-2">Lade Versionen...</span>
                   </div>
-                  <div v-else-if="versions.length === 0" class="text-center py-2">
+                  <div
+                    v-else-if="versions.length === 0"
+                    class="text-center py-2"
+                  >
                     <span class="text-muted">Keine Versionen gefunden</span>
                   </div>
                   <div v-else class="list-group list-group-flush">
@@ -622,15 +661,21 @@ const submit = () => {
                       :key="version.id"
                       type="button"
                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                      :class="{ 'active': version.is_current }"
+                      :class="{ active: version.is_current }"
                       @click="previewVersion(version.id)"
                     >
                       <div>
                         <span class="fw-semibold">V{{ version.version }}</span>
-                        <small class="d-block">{{ formatDate(version.created_at) }}</small>
+                        <small class="d-block">{{
+                          formatDate(version.created_at)
+                        }}</small>
                       </div>
                       <div>
-                        <span v-if="version.is_current" class="badge rounded-pill bg-light text-primary">Aktuell</span>
+                        <span
+                          v-if="version.is_current"
+                          class="badge rounded-pill bg-light text-primary"
+                          >Aktuell</span
+                        >
                         <i v-else class="fa fa-eye"></i>
                       </div>
                     </button>
@@ -653,17 +698,24 @@ const submit = () => {
               <div class="block block-rounded bg-body-light">
                 <div class="block-header">
                   <h3 class="block-title fs-sm">
-                    <i class="fa fa-fw fa-lightbulb me-1"></i> Prompt Engineering Tips
+                    <i class="fa fa-fw fa-lightbulb me-1"></i> Prompt
+                    Engineering Tips
                   </h3>
                 </div>
                 <div class="block-content fs-sm">
                   <ul class="mb-0">
-                    <li>Be specific about the task you want the AI to perform</li>
+                    <li>
+                      Be specific about the task you want the AI to perform
+                    </li>
                     <li>Define the format you want the output in</li>
-                    <li>Provide examples for better results (few-shot learning)</li>
+                    <li>
+                      Provide examples for better results (few-shot learning)
+                    </li>
                     <li>Break complex tasks into smaller steps</li>
                     <li>Use variables for dynamic content</li>
-                    <li>Use the AI enhancement button to improve your sections</li>
+                    <li>
+                      Use the AI enhancement button to improve your sections
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -680,13 +732,17 @@ const submit = () => {
                   :class="{ 'is-invalid': form.errors.title }"
                   v-model="form.title"
                   placeholder="Give your prompt a descriptive name"
-                >
-                <div v-if="form.errors.title" class="invalid-feedback">{{ form.errors.title }}</div>
+                />
+                <div v-if="form.errors.title" class="invalid-feedback">
+                  {{ form.errors.title }}
+                </div>
               </div>
 
               <!-- Description -->
               <div class="mb-4">
-                <label class="form-label" for="prompt-description">Description (Optional)</label>
+                <label class="form-label" for="prompt-description"
+                  >Description (Optional)</label
+                >
                 <textarea
                   id="prompt-description"
                   class="form-control"
@@ -695,12 +751,16 @@ const submit = () => {
                   rows="2"
                   placeholder="Describe what this prompt does and how to use it"
                 ></textarea>
-                <div v-if="form.errors.description" class="invalid-feedback">{{ form.errors.description }}</div>
+                <div v-if="form.errors.description" class="invalid-feedback">
+                  {{ form.errors.description }}
+                </div>
               </div>
 
               <!-- Tags -->
               <div class="mb-4">
-                <label class="form-label" for="prompt-tags">Tags (Optional)</label>
+                <label class="form-label" for="prompt-tags"
+                  >Tags (Optional)</label
+                >
                 <div class="d-flex flex-wrap gap-1 mb-2">
                   <span
                     v-for="(tag, index) in form.tags"
@@ -708,7 +768,11 @@ const submit = () => {
                     class="fs-sm fw-semibold d-inline-block py-1 px-3 rounded-pill bg-primary text-white"
                   >
                     {{ tag }}
-                    <button type="button" class="btn-close btn-close-white fs-sm ms-1" @click="removeTag(index)"></button>
+                    <button
+                      type="button"
+                      class="btn-close btn-close-white fs-sm ms-1"
+                      @click="removeTag(index)"
+                    ></button>
                   </span>
                 </div>
                 <div class="input-group">
@@ -719,8 +783,12 @@ const submit = () => {
                     v-model="newTag"
                     @keydown="handleTagKeydown"
                     placeholder="Add a tag and press Enter"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-alt-primary"
+                    @click="addTag"
                   >
-                  <button type="button" class="btn btn-alt-primary" @click="addTag">
                     <i class="fa fa-plus me-1"></i> Add
                   </button>
                 </div>
@@ -731,7 +799,9 @@ const submit = () => {
 
               <!-- Dynamic Prompt Sections -->
               <div class="mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-2">
+                <div
+                  class="d-flex justify-content-between align-items-center mb-2"
+                >
                   <label class="form-label mb-0">Prompt Sections</label>
                   <button
                     type="button"
@@ -751,12 +821,27 @@ const submit = () => {
                   >
                     <div class="block-header block-header-default">
                       <h3 class="block-title fs-sm">
-                        <i class="fa me-1" :class="section.is_variable ? 'fa-code text-info' : 'fa-align-left'"></i>
-                        {{ section.is_variable ? `Variable: ${section.variable_name}` : `Section ${index + 1}` }}
+                        <i
+                          class="fa me-1"
+                          :class="
+                            section.is_variable
+                              ? 'fa-code text-info'
+                              : 'fa-align-left'
+                          "
+                        ></i>
+                        {{
+                          section.is_variable
+                            ? `Variable: ${section.variable_name}`
+                            : `Section ${index + 1}`
+                        }}
                       </h3>
                       <div class="block-options">
                         <!-- Drag handle -->
-                        <button type="button" class="btn btn-sm btn-alt-secondary js-tooltip handle" title="Drag to reorder">
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-alt-secondary js-tooltip handle"
+                          title="Drag to reorder"
+                        >
                           <i class="fa fa-fw fa-arrows-alt"></i>
                         </button>
 
@@ -764,11 +849,22 @@ const submit = () => {
                         <button
                           type="button"
                           class="btn btn-sm"
-                          :class="section.is_variable ? 'btn-alt-info' : 'btn-alt-secondary'"
+                          :class="
+                            section.is_variable
+                              ? 'btn-alt-info'
+                              : 'btn-alt-secondary'
+                          "
                           @click="toggleVariable(section)"
-                          :title="section.is_variable ? 'Convert to text' : 'Convert to variable'"
+                          :title="
+                            section.is_variable
+                              ? 'Convert to text'
+                              : 'Convert to variable'
+                          "
                         >
-                          <i class="fa fa-fw" :class="section.is_variable ? 'fa-font' : 'fa-code'"></i>
+                          <i
+                            class="fa fa-fw"
+                            :class="section.is_variable ? 'fa-font' : 'fa-code'"
+                          ></i>
                         </button>
 
                         <!-- AI enhance button -->
@@ -779,7 +875,14 @@ const submit = () => {
                           @click="generateImprovedPrompt(section)"
                           :disabled="isAiGenerating"
                         >
-                          <i class="fa fa-fw" :class="isAiGenerating && activeSection === section ? 'fa-spinner fa-spin' : 'fa-magic'"></i>
+                          <i
+                            class="fa fa-fw"
+                            :class="
+                              isAiGenerating && activeSection === section
+                                ? 'fa-spinner fa-spin'
+                                : 'fa-magic'
+                            "
+                          ></i>
                         </button>
 
                         <!-- Remove section -->
@@ -797,13 +900,15 @@ const submit = () => {
                     <div class="block-content p-2">
                       <div v-if="section.is_variable" class="mb-2">
                         <div class="input-group input-group-sm">
-                          <span class="input-group-text bg-body-light">Variable Name</span>
+                          <span class="input-group-text bg-body-light"
+                            >Variable Name</span
+                          >
                           <input
                             type="text"
                             class="form-control form-control-sm"
                             v-model="section.variable_name"
                             placeholder="Enter variable name"
-                          >
+                          />
                         </div>
                       </div>
                       <textarea
@@ -822,7 +927,9 @@ const submit = () => {
               <div class="mb-4">
                 <label class="form-label" for="prompt-content">
                   Final Prompt Preview
-                  <small class="text-muted">(Generated from sections above)</small>
+                  <small class="text-muted"
+                    >(Generated from sections above)</small
+                  >
                 </label>
                 <textarea
                   id="prompt-content"
@@ -831,9 +938,15 @@ const submit = () => {
                   rows="6"
                   readonly
                 ></textarea>
-                <div v-if="form.errors.content" class="invalid-feedback d-block">{{ form.errors.content }}</div>
+                <div
+                  v-if="form.errors.content"
+                  class="invalid-feedback d-block"
+                >
+                  {{ form.errors.content }}
+                </div>
                 <div class="fs-sm text-muted mt-1">
-                  This is the final prompt that will be saved. It's automatically generated from your sections above.
+                  This is the final prompt that will be saved. It's
+                  automatically generated from your sections above.
                 </div>
               </div>
 
@@ -851,7 +964,8 @@ const submit = () => {
                   class="btn btn-alt-primary"
                   :disabled="form.processing"
                 >
-                  <i class="fa fa-fw fa-check opacity-50 me-1"></i> Update Prompt
+                  <i class="fa fa-fw fa-check opacity-50 me-1"></i> Update
+                  Prompt
                 </button>
               </div>
             </div>
@@ -862,7 +976,14 @@ const submit = () => {
   </div>
 
   <!-- Version Preview Modal -->
-  <div class="modal fade" id="modal-version-preview" tabindex="-1" role="dialog" aria-labelledby="modal-version-preview" aria-hidden="true">
+  <div
+    class="modal fade"
+    id="modal-version-preview"
+    tabindex="-1"
+    role="dialog"
+    aria-labelledby="modal-version-preview"
+    aria-hidden="true"
+  >
     <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
       <div class="modal-content">
         <div class="block block-rounded block-themed block-transparent mb-0">
@@ -874,7 +995,12 @@ const submit = () => {
               </small>
             </h3>
             <div class="block-options">
-              <button type="button" class="btn-block-option" data-bs-dismiss="modal" aria-label="Close">
+              <button
+                type="button"
+                class="btn-block-option"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              >
                 <i class="fa fa-fw fa-times"></i>
               </button>
             </div>
@@ -882,11 +1008,22 @@ const submit = () => {
           <div class="block-content fs-sm" v-if="versionPreview">
             <div class="mb-4">
               <h4 class="h5">Prompt Inhalt</h4>
-              <div class="form-control-plaintext bg-body-light p-3 rounded" style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;">
+              <div
+                class="form-control-plaintext bg-body-light p-3 rounded"
+                style="
+                  white-space: pre-wrap;
+                  word-wrap: break-word;
+                  overflow-wrap: break-word;
+                "
+              >
                 {{ versionPreview.content }}
               </div>
             </div>
-            <div v-if="versionPreview.variables && versionPreview.variables.length > 0">
+            <div
+              v-if="
+                versionPreview.variables && versionPreview.variables.length > 0
+              "
+            >
               <h4 class="h5">Erkannte Variablen</h4>
               <div class="d-flex flex-wrap gap-1">
                 <span
@@ -900,7 +1037,11 @@ const submit = () => {
             </div>
           </div>
           <div class="block-content block-content-full text-end bg-body">
-            <button type="button" class="btn btn-sm btn-alt-secondary me-1" data-bs-dismiss="modal">
+            <button
+              type="button"
+              class="btn btn-sm btn-alt-secondary me-1"
+              data-bs-dismiss="modal"
+            >
               Schließen
             </button>
             <button

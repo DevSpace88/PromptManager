@@ -201,10 +201,12 @@ class PromptController extends Controller
         }
 
         return response()->json([
+            'id' => $version->id,
             'content' => $version->content,
             'variables' => $version->variables,
             'version' => $version->version,
             'created_at' => $version->created_at,
+            'is_current' => $version->is_current,
         ]);
     }
 

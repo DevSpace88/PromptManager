@@ -44,28 +44,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Prompts - Spezifische Routen vor Resource-Routen
 
 
-
     // Innerhalb deiner Gruppe für authentifizierte Routen:
-        // Liefert alle Versionen des Prompts (als JSON)
-        Route::get('/prompts/{prompt}/versions', [PromptController::class, 'versions'])
-            ->name('prompts.versions');
+    // Liefert alle Versionen des Prompts (als JSON)
+    Route::get('/prompts/{prompt}/versions', [PromptController::class, 'versions'])
+        ->name('prompts.versions');
 
-        // Zeigt eine Vorschau einer bestimmten Version (als JSON)
-        Route::get('/prompts/{prompt}/versions/{version}/preview', [PromptController::class, 'previewVersion'])
-            ->name('prompts.versions.preview');
+    // Zeigt eine Vorschau einer bestimmten Version (als JSON)
+    Route::get('/prompts/{prompt}/versions/{version}/preview', [PromptController::class, 'previewVersion'])
+        ->name('prompts.versions.preview');
 
-        // Setzt eine bestimmte Version als die aktuelle
-        Route::post('/prompts/{prompt}/versions/{version}/set-current', [PromptController::class, 'setVersion'])
-            ->name('prompts.versions.set-current');
+    // Setzt eine bestimmte Version als die aktuelle
+    Route::post('/prompts/{prompt}/versions/{version}/set-current', [PromptController::class, 'setVersion'])
+        ->name('prompts.versions.set-current');
 
-//    Route::get('/prompts/{prompt}/versions/{version}/preview', [PromptController::class, 'previewVersion'])
-//        ->name('prompts.versions.preview');
-////    Route::post('/prompts/{prompt}/versions/{version}/set-current', [PromptController::class, 'setVersion'])
-////        ->name('prompts.versions.set-current');
-//    Route::post('/prompts/{prompt}/versions/{version}/set-current', [PromptController::class, 'setVersion'])
-//        ->name('prompts.versions.set-current');
-////    Route::post('/prompts/{prompt}/versions/{version}/set-current', [PromptController::class, 'setVersion'])
-////        ->name('prompts.versions.set-current');
     Route::get('/prompts/{prompt}/versions', [PromptController::class, 'getVersions'])
         ->name('prompts.versions');
     Route::resource('prompts', PromptController::class);
