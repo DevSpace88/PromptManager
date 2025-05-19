@@ -1,7 +1,8 @@
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { Head, Link, useForm, router } from "@inertiajs/vue3";
 import { useSortable } from "@/composables/useSortable";
+import { usePromptEditor } from "@/composables/usePromptEditor";
 
 // Props to receive the existing prompt data
 const props = defineProps({
@@ -18,11 +19,24 @@ const form = useForm({
   prompt_sections: [],
 });
 
-// For handling tag inputs
-const newTag = ref("");
-const extractedVariables = ref([]);
-const isAiGenerating = ref(false);
-const activeSection = ref(null);
+// Verwende das Composable für die Editor-Logik
+const {
+  newTag,
+  extractedVariables,
+  isAiGenerating,
+  activeSection,
+  initSectionsFromContent,
+  addTag,
+  handleTagKeydown,
+  removeTag,
+  addSection,
+  removeSection,
+  toggleVariable,
+  generateImprovedPrompt,
+} = usePromptEditor(form);
+
+// Element references for drag-and-drop
+const sectionsContainer = ref(null);
 
 // Version management
 const versions = ref([]);
@@ -32,9 +46,6 @@ const isPreviewingVersion = ref(false);
 const versionPreview = ref(null);
 const showVersionModal = ref(false);
 
-// Element references for drag-and-drop
-const sectionsContainer = ref(null);
-
 // Setup sortable for the sections
 useSortable(sectionsContainer, {
   onEnd: (event) => {
@@ -42,31 +53,41 @@ useSortable(sectionsContainer, {
     const [movedItem] = newSections.splice(event.oldIndex, 1);
     newSections.splice(event.newIndex, 0, movedItem);
     form.prompt_sections = newSections;
-    updatePromptContent();
   },
 });
 
 onMounted(async () => {
-  initSectionsFromContent();
-  extractVariables(form.content);
+  // Initialisiere Sektionen und Variablen NACHDEM form.content gesetzt wurde.
+  // Das Composable usePromptEditor handhabt bereits die Initialisierung von prompt_sections,
+  // wenn form.content beim Setup des Composables bereits einen Wert hat (was hier der Fall ist).
+  // Der explizite Aufruf von initSectionsFromContent stellt sicher, dass es nach der form-Initialisierung läuft.
+  // und extractVariables wird durch den Watcher im Composable auf form.content aufgerufen.
+  if (form.content) {
+    initSectionsFromContent();
+  } else {
+    // Falls form.content initial leer ist (sollte bei Edit nicht sein, aber sicher ist sicher)
+    form.prompt_sections = [
+      {
+        id: 1,
+        type: "text",
+        content: "",
+        is_variable: false,
+        variable_name: "",
+      },
+    ];
+  }
+
   await loadVersions();
 
-  // Einfache Modal-Initialisierung über ein ref
-  // Der Versionsvorschau-Modal wird automatisch initialisiert
+  // Modal-Initialisierung
   setTimeout(() => {
     try {
       const modalElement = document.getElementById("modal-version-preview");
       if (modalElement) {
         const modal = new bootstrap.Modal(modalElement);
-
-        // Bei Aufruf von previewVersion wird das Modal angezeigt
         watch(showVersionModal, (val) => {
-          if (val) {
-            modal.show();
-          }
+          if (val) modal.show();
         });
-
-        // Wenn das Modal geschlossen wird, setze showVersionModal zurück
         modalElement.addEventListener("hidden.bs.modal", () => {
           showVersionModal.value = false;
         });
@@ -80,7 +101,6 @@ onMounted(async () => {
 // Load all versions for the prompt
 const loadVersions = async () => {
   isLoadingVersions.value = true;
-
   try {
     const response = await fetch(route("prompts.versions", props.prompt.id));
     if (response.ok) {
@@ -99,9 +119,7 @@ const loadVersions = async () => {
 // Preview a specific version
 const previewVersion = async (versionId) => {
   if (!versionId) return;
-
   isPreviewingVersion.value = true;
-
   try {
     const response = await fetch(
       route("prompts.versions.preview", {
@@ -109,7 +127,6 @@ const previewVersion = async (versionId) => {
         version: versionId,
       }),
     );
-
     if (response.ok) {
       const data = await response.json();
       versionPreview.value = data;
@@ -125,73 +142,47 @@ const previewVersion = async (versionId) => {
 };
 
 const setVersionAsCurrent = (versionId) => {
-  console.log(
-    "[Edit.vue] setVersionAsCurrent aufgerufen mit versionId:",
-    versionId,
-  );
   if (
     !confirm(
       "Möchtest du diese Version aktivieren? Nicht gespeicherte Änderungen gehen verloren.",
     )
   ) {
-    console.log("[Edit.vue] Bestätigung abgelehnt.");
     return;
   }
-
-  const params = {
-    prompt: props.prompt.id,
-    version: versionId,
-  };
-  console.log("[Edit.vue] Parameter für router.post:", params);
-
-  router.post(route("prompts.versions.set-current", params), {
-    preserveState: false, // Wichtig für Inertia, um Props neu zu laden
-    preserveScroll: true,
-    onSuccess: () => {
-      // Props (currentVersion, prompt) sollten von Inertia aktualisiert worden sein.
-      // Formular basierend auf den neuen Props aktualisieren.
-      if (props.prompt) {
-        form.title = props.prompt.title || "";
-        form.description = props.prompt.description || "";
-        form.tags = props.prompt.tags || [];
-      }
-      if (props.currentVersion) {
-        form.content = props.currentVersion.content || "";
-        selectedVersionId.value = props.currentVersion.id;
-      }
-
-      initSectionsFromContent(); // Editor-Sektionen basierend auf form.content neu initialisieren
-      extractVariables(form.content); // Variablen neu extrahieren
-
-      loadVersions(); // Versionsliste (für Seitenleiste) neu laden, um is_current zu aktualisieren
-
-      // Modal schließen, falls offen
-      console.log(
-        "[Edit.vue] onSuccess: showVersionModal.value ist",
-        showVersionModal.value,
-      );
-      if (showVersionModal.value) {
+  router.post(
+    route("prompts.versions.set-current", {
+      prompt: props.prompt.id,
+      version: versionId,
+    }),
+    {
+      preserveState: false,
+      preserveScroll: true,
+      onSuccess: () => {
+        if (props.prompt) {
+          form.title = props.prompt.title || "";
+          form.description = props.prompt.description || "";
+          form.tags = props.prompt.tags || [];
+        }
+        if (props.currentVersion) {
+          form.content = props.currentVersion.content || "";
+          selectedVersionId.value = props.currentVersion.id;
+        }
+        // Sektionen neu initialisieren basierend auf dem aktualisierten form.content
+        initSectionsFromContent();
+        loadVersions();
         const modalElement = document.getElementById("modal-version-preview");
-        console.log("[Edit.vue] onSuccess: modalElement ist", modalElement);
         if (modalElement) {
           const modalInstance = bootstrap.Modal.getInstance(modalElement);
-          console.log("[Edit.vue] onSuccess: modalInstance ist", modalInstance);
-          if (modalInstance) {
-            console.log("[Edit.vue] onSuccess: Aufruf modalInstance.hide()");
-            modalInstance.hide();
-          }
+          if (modalInstance) modalInstance.hide();
         }
         showVersionModal.value = false;
-        console.log(
-          "[Edit.vue] onSuccess: showVersionModal.value wurde auf false gesetzt.",
-        );
-      }
+      },
+      onError: (errors) => {
+        console.error("Fehler beim Setzen der Version:", errors);
+        alert("Ein Fehler ist beim Aktivieren der Version aufgetreten.");
+      },
     },
-    onError: (errors) => {
-      console.error("Fehler beim Setzen der Version:", errors);
-      // Hier könnte man dem Benutzer eine Fehlermeldung anzeigen
-    },
-  });
+  );
 };
 
 // Format date to localized string
@@ -208,269 +199,8 @@ const formatDate = (dateString) => {
   }).format(date);
 };
 
-// Initialize sections from the prompt content
-const initSectionsFromContent = () => {
-  if (!form.content) {
-    form.prompt_sections = [
-      {
-        id: 1,
-        type: "text",
-        content: "",
-        is_variable: false,
-        variable_name: "",
-      },
-    ];
-    return;
-  }
-
-  const sections = [];
-  let idCounter = 1;
-
-  // Split content by variables and plain text
-  const regex = /\{\{(.*?)\}\}/g;
-  let lastIndex = 0;
-  let match;
-
-  while ((match = regex.exec(form.content)) !== null) {
-    // Add text before the variable if there is any
-    if (match.index > lastIndex) {
-      const textContent = form.content.substring(lastIndex, match.index);
-      if (textContent.trim()) {
-        sections.push({
-          id: idCounter++,
-          type: "text",
-          content: textContent,
-          is_variable: false,
-          variable_name: "",
-        });
-      }
-    }
-
-    // Add the variable
-    sections.push({
-      id: idCounter++,
-      type: "text",
-      content: "",
-      is_variable: true,
-      variable_name: match[1].trim(),
-    });
-
-    lastIndex = match.index + match[0].length;
-  }
-
-  // Add any remaining text after the last variable
-  if (lastIndex < form.content.length) {
-    const remainingText = form.content.substring(lastIndex);
-    if (remainingText.trim()) {
-      sections.push({
-        id: idCounter++,
-        type: "text",
-        content: remainingText,
-        is_variable: false,
-        variable_name: "",
-      });
-    }
-  }
-
-  // If no sections were created (no variables found), create a single text section
-  if (sections.length === 0) {
-    sections.push({
-      id: idCounter++,
-      type: "text",
-      content: form.content,
-      is_variable: false,
-      variable_name: "",
-    });
-  }
-
-  form.prompt_sections = sections;
-};
-
-// Extract variables from prompt content
-const extractVariables = (content) => {
-  if (!content) {
-    extractedVariables.value = [];
-    return;
-  }
-
-  const regex = /\{\{(.*?)\}\}/g;
-  const matches = [...content.matchAll(regex)];
-  extractedVariables.value = [
-    ...new Set(matches.map((match) => match[1].trim())),
-  ];
-};
-
-// Watch for changes in content to extract variables
-watch(
-  () => form.content,
-  (newContent) => {
-    extractVariables(newContent);
-  },
-);
-
-// Add new tag
-const addTag = () => {
-  if (newTag.value.trim()) {
-    if (!form.tags.includes(newTag.value.trim())) {
-      form.tags.push(newTag.value.trim());
-    }
-    newTag.value = "";
-  }
-};
-
-// Handle Enter key in tag input
-const handleTagKeydown = (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    addTag();
-  }
-};
-
-// Remove a tag
-const removeTag = (index) => {
-  form.tags.splice(index, 1);
-};
-
-// Add a new prompt section
-const addSection = (type = "text") => {
-  const newId = Math.max(0, ...form.prompt_sections.map((s) => s.id)) + 1;
-  form.prompt_sections.push({
-    id: newId,
-    type,
-    content: "",
-    is_variable: false,
-    variable_name: "",
-  });
-};
-
-// Remove a section
-const removeSection = (index) => {
-  if (form.prompt_sections.length > 1) {
-    form.prompt_sections.splice(index, 1);
-    updatePromptContent();
-  }
-};
-
-// Toggle variable status for a section
-const toggleVariable = (section) => {
-  section.is_variable = !section.is_variable;
-  if (section.is_variable && !section.variable_name) {
-    // Generate a default variable name
-    section.variable_name = `variable_${section.id}`;
-  }
-  updatePromptContent();
-};
-
-// Update the main prompt content from all sections
-const updatePromptContent = () => {
-  let content = "";
-
-  form.prompt_sections.forEach((section) => {
-    if (section.is_variable) {
-      content += `{{${section.variable_name}}}`;
-    } else {
-      content += section.content;
-    }
-    content += "\n";
-  });
-
-  form.content = content.trim();
-};
-
-// Watch all sections for changes
-watch(
-  () => form.prompt_sections,
-  () => {
-    updatePromptContent();
-  },
-  { deep: true },
-);
-
-// Generate improved prompt with AI
-const generateImprovedPrompt = async (section) => {
-  if (!section.content.trim()) return;
-
-  isAiGenerating.value = true;
-  activeSection.value = section;
-
-  try {
-    // This is a placeholder - in a real implementation, you would call your backend API
-    const response = await fetch("/api/prompts/enhance", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt: section.content,
-        context:
-          "Turn this into a more detailed, effective AI prompt using best practices",
-      }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      section.content = data.improved_prompt;
-      updatePromptContent();
-    } else {
-      console.error("Failed to generate improved prompt");
-      // For demo, simulate AI response
-      setTimeout(() => {
-        section.content = improvePromptDemo(section.content);
-        updatePromptContent();
-        isAiGenerating.value = false;
-      }, 1500);
-    }
-  } catch (error) {
-    console.error("Error generating improved prompt:", error);
-    // For demo, simulate AI response
-    setTimeout(() => {
-      section.content = improvePromptDemo(section.content);
-      updatePromptContent();
-      isAiGenerating.value = false;
-    }, 1500);
-  } finally {
-    isAiGenerating.value = false;
-  }
-};
-
-// Demo function to simulate AI prompt improvement
-const improvePromptDemo = (originalPrompt) => {
-  // This is just a demo enhancement - in a real app, this would come from your AI service
-  const enhanced = originalPrompt.trim();
-  if (enhanced.toLowerCase().includes("summarize")) {
-    return `Please provide a comprehensive summary of the following text. The summary should:
-- Capture the main ideas and key points
-- Be approximately 25% of the original length
-- Maintain the tone and style of the original
-- Highlight any crucial statistics or data points
-- Organize information logically with clear structure
-
-Text to summarize:
-${enhanced.replace(/summarize/i, "")}`;
-  } else if (enhanced.toLowerCase().includes("write")) {
-    return `Create a well-structured, engaging piece of writing that:
-- Addresses the topic: ${enhanced.replace(/write/i, "")}
-- Uses a professional, clear tone
-- Includes specific examples and evidence
-- Follows a logical structure with introduction, main points, and conclusion
-- Avoids common clichés and generic statements
-- Provides unique insights backed by reasoning`;
-  } else {
-    return `${enhanced}
-
-Please provide a detailed, step-by-step response that:
-- Addresses all aspects of the request thoroughly
-- Uses specific examples where appropriate
-- Explains reasoning and methodology clearly
-- Structures information in a logical sequence
-- Considers potential limitations or alternatives
-- Focuses on practical, actionable information`;
-  }
-};
-
 // Submit the form
 const submit = () => {
-  updatePromptContent(); // Ensure content is updated before submission
   form.put(route("prompts.update", props.prompt.id), {
     onSuccess: () => {
       // Form submission successful
