@@ -115,16 +115,7 @@ class WorkflowController extends Controller
         ]);
     }
 
-//    public function edit(Workflow $workflow)
-//    {
-//        if ($workflow->user_id !== Auth::id()) {
-//            abort(403);
-//        }
-//
-//        return Inertia::render('Pages/Workflows/Edit', [
-//            'workflow' => $workflow,
-//        ]);
-//    }
+
     public function edit(Workflow $workflow)
     {
         if ($workflow->user_id !== Auth::id()) {
@@ -215,10 +206,18 @@ class WorkflowController extends Controller
         // Dispatch job to run workflow
         ExecuteWorkflowJob::dispatch($executionLog);
 
-        return response()->json([
-            'execution_id' => $executionLog->id,
-            'message' => 'Workflow execution started',
-        ]);
+        // Überprüfen, ob es ein AJAX-Request oder ein normaler Inertia-Request ist
+        if ($request->wantsJson() || $request->header('X-Inertia') === 'false') {
+            // Für AJAX/API-Anfragen: JSON-Antwort
+            return response()->json([
+                'execution_id' => $executionLog->id,
+                'message' => 'Workflow execution started',
+            ]);
+        } else {
+            // Für Inertia-Anfragen: Zurück zur Workflow-Ansicht mit Statusmeldung
+            return redirect()->route('workflows.show', $workflow)
+                ->with('success', 'Workflow execution started. Execution ID: ' . $executionLog->id);
+        }
     }
 
     public function getExecutionStatus(ExecutionLog $executionLog)
@@ -300,18 +299,15 @@ class WorkflowController extends Controller
             'updated_at' => $workflow->updated_at,
         ];
 
-        // JSON erstellen (mit formatierter Ausgabe für bessere Lesbarkeit)
         $jsonData = json_encode($exportData, JSON_PRETTY_PRINT);
-
-        // Generiere einen sauberen Dateinamen basierend auf dem Workflow-Namen
-//        $filename = Str::slug($workflow->name) . '-export.json';
         $filename = strtolower(str_replace(' ', '-', $workflow->name)) . '-export.json';
 
-
-        // Zurückgeben als Download-Datei anstatt als JSON-Antwort
-        return response($jsonData)
-            ->header('Content-Type', 'application/json')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        return response()->streamDownload(function () use ($jsonData) {
+            echo $jsonData;
+        }, $filename, [
+            'Content-Type' => 'application/json',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 
     // In WorkflowController.php:
@@ -337,10 +333,11 @@ class WorkflowController extends Controller
         // Dateiname erstellen
         $filename = preg_replace('/[^a-z0-9]+/', '-', strtolower($workflow->name)) . '-export.json';
 
-        return response($jsonData, 200, [
+        return response()->streamDownload(function () use ($jsonData) {
+            echo $jsonData;
+        }, $filename, [
             'Content-Type' => 'application/json',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            'X-Inertia-Location' => null, // Verhindert Inertia-Navigation
         ]);
     }
 

@@ -1,26 +1,26 @@
 // resources/js/views/Pages/Workflows/Nodes/ConditionNode.vue
 <script setup>
-import { ref, computed } from 'vue';
-import { Handle, Position, useVueFlow } from '@vue-flow/core';
+import { ref, computed } from "vue";
+import { Handle, Position, useVueFlow } from "@vue-flow/core";
 
 // Props receiving data from the workflow editor
 const props = defineProps({
   id: {
     type: String,
-    required: true
+    required: true,
   },
   data: {
     type: Object,
-    required: true
+    required: true,
   },
   selected: {
     type: Boolean,
-    default: false
+    default: false,
   },
   isConnectable: {
     type: Boolean,
-    default: true
-  }
+    default: true,
+  },
 });
 
 // Get Vue Flow methods
@@ -28,7 +28,7 @@ const { findNode, setNodes, getNodes } = useVueFlow();
 
 // Node configuration
 const config = ref({
-  showSettings: false
+  showSettings: false,
 });
 
 // Toggle settings panel
@@ -43,25 +43,25 @@ const availableVariables = computed(() => {
   const variables = [];
 
   // Extract variables from nodes
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     if (node.data) {
       // From input nodes
-      if (node.data.type === 'input' && node.data.variable) {
+      if (node.data.type === "input" && node.data.variable) {
         variables.push(node.data.variable);
       }
 
       // From prompt nodes
-      if (node.data.type === 'prompt' && node.data.output_variable) {
+      if (node.data.type === "prompt" && node.data.output_variable) {
         variables.push(node.data.output_variable);
       }
 
       // From API nodes
-      if (node.data.type === 'api' && node.data.output_variable) {
+      if (node.data.type === "api" && node.data.output_variable) {
         variables.push(node.data.output_variable);
       }
 
       // From transform nodes
-      if (node.data.type === 'transform' && node.data.output_variable) {
+      if (node.data.type === "transform" && node.data.output_variable) {
         variables.push(node.data.output_variable);
       }
     }
@@ -80,100 +80,81 @@ const updateNodeData = (key, value) => {
     ...node,
     data: {
       ...node.data,
-      [key]: value
-    }
+      [key]: value,
+    },
   };
 
-  setNodes((nodes) => nodes.map(n => n.id === props.id ? newNode : n));
+  setNodes((nodes) => nodes.map((n) => (n.id === props.id ? newNode : n)));
 };
 
 // Insert variable into condition
 const insertVariable = (variable) => {
-  const currentCondition = props.data.condition || '';
-  updateNodeData('condition', currentCondition + ' {{' + variable + '}} ');
+  const currentCondition = props.data.condition || "";
+  updateNodeData("condition", currentCondition + " {{" + variable + "}} ");
 };
 
 // Condition examples for quick start
 const conditionExamples = [
   {
-    label: 'Contains text',
-    condition: '{{variable}}.toLowerCase().includes("text")'
+    label: "Contains text",
+    condition: '{{variable}}.toLowerCase().includes("text")',
   },
   {
-    label: 'Equals value',
-    condition: '{{variable}} === "value"'
+    label: "Equals value",
+    condition: '{{variable}} === "value"',
   },
   {
-    label: 'Greater than',
-    condition: 'parseFloat({{variable}}) > 10'
+    label: "Greater than",
+    condition: "parseFloat({{variable}}) > 10",
   },
   {
-    label: 'Is empty',
-    condition: '!{{variable}} || {{variable}}.trim() === ""'
+    label: "Is empty",
+    condition: '!{{variable}} || {{variable}}.trim() === ""',
   },
   {
-    label: 'JSON has property',
-    condition: 'typeof JSON.parse({{variable}}).property !== "undefined"'
-  }
+    label: "JSON has property",
+    condition: 'typeof JSON.parse({{variable}}).property !== "undefined"',
+  },
 ];
 
 // Apply a condition example
 const applyExample = (example) => {
-  updateNodeData('condition', example.condition);
+  updateNodeData("condition", example.condition);
 };
 </script>
 
 <template>
-  <div :class="['condition-node', { 'selected': selected }]">
-    <!-- Target Handle (Input) -->
+  <div :class="['condition-node', { selected: selected }]">
+    <!-- Target Handle (Input) - oben mittig -->
     <Handle
       type="target"
       position="top"
       :id="id + '-target'"
       :connectable="isConnectable"
+      class="target-handle"
     />
 
-<!--    &lt;!&ndash; Source Handle (True output) &ndash;&gt;-->
-<!--    <Handle-->
-<!--      type="source"-->
-<!--      position="bottom"-->
-<!--      :id="id + '-source-true'"-->
-<!--      :connectable="isConnectable"-->
-<!--      class="source-true"-->
-<!--    />-->
-
-<!--    &lt;!&ndash; Source Handle (False output) &ndash;&gt;-->
-<!--    <Handle-->
-<!--      type="source"-->
-<!--      position="right"-->
-<!--      :id="id + '-source-false'"-->
-<!--      :connectable="isConnectable"-->
-<!--      class="source-false"-->
-<!--    />-->
-
-    <!-- Im ConditionNode Template -->
-    <!-- True (unten) Handle -->
+    <!-- Source Handle (True output) - unten mittig -->
     <Handle
       type="source"
       position="bottom"
       :id="`${id}-source-true`"
       :connectable="isConnectable"
-      class="source-true"
+      class="source-handle source-true"
     />
 
-    <!-- False (rechts) Handle -->
+    <!-- Source Handle (False output) - rechts mittig -->
     <Handle
       type="source"
       position="right"
       :id="`${id}-source-false`"
       :connectable="isConnectable"
-      class="source-false"
+      class="source-handle source-false"
     />
 
     <!-- Node Content -->
     <div class="condition-node-content">
-      <div class="condition-node-header node-drag-handle
-">
+      <div class="condition-node-header node-drag-handle">
         <i class="fa fa-code-branch text-warning me-1"></i>
         <span class="condition-node-label">{{ data.label }}</span>
         <button
@@ -182,7 +163,12 @@ const applyExample = (example) => {
           @click="toggleSettings"
           :title="config.showSettings ? 'Hide settings' : 'Show settings'"
         >
-          <i :class="['fa', config.showSettings ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
+          <i
+            :class="[
+              'fa',
+              config.showSettings ? 'fa-chevron-up' : 'fa-chevron-down',
+            ]"
+          ></i>
         </button>
       </div>
 
@@ -200,7 +186,10 @@ const applyExample = (example) => {
               @change="updateNodeData('condition', data.condition)"
             ></textarea>
           </div>
-          <div class="setting-help">JavaScript expression to evaluate. Use {{variable}} for workflow variables.</div>
+          <div class="setting-help">
+            JavaScript expression to evaluate. Use {{ variable }} for workflow
+            variables.
+          </div>
         </div>
 
         <!-- Available Variables -->
@@ -217,7 +206,10 @@ const applyExample = (example) => {
               >
                 {{ variable }}
               </button>
-              <div v-if="availableVariables.length === 0" class="condition-no-variables">
+              <div
+                v-if="availableVariables.length === 0"
+                class="condition-no-variables"
+              >
                 No variables available
               </div>
             </div>
@@ -276,11 +268,15 @@ const applyExample = (example) => {
       <!-- Node Summary (when collapsed) -->
       <div v-else class="condition-node-summary">
         <div class="condition-expr">
-          {{ data.condition || 'No condition' }}
+          {{ data.condition || "No condition" }}
         </div>
         <div class="condition-paths">
-          <div class="condition-path-true">↓ {{ data.true_label || 'True' }}</div>
-          <div class="condition-path-false">→ {{ data.false_label || 'False' }}</div>
+          <div class="condition-path-true">
+            ↓ {{ data.true_label || "True" }}
+          </div>
+          <div class="condition-path-false">
+            → {{ data.false_label || "False" }}
+          </div>
         </div>
       </div>
     </div>
@@ -295,7 +291,7 @@ const applyExample = (example) => {
   border: 2px solid #db9038;
   border-radius: 5px;
   font-size: 12px;
-  overflow: hidden;
+  overflow: visible; /* Wichtig für die Sichtbarkeit der Handles */
   position: relative;
 }
 
@@ -303,14 +299,36 @@ const applyExample = (example) => {
   box-shadow: 0 0 0 2px #db9038;
 }
 
-.source-true {
+/* Allgemeine Handle-Styles */
+:deep(.vue-flow__handle) {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  z-index: 10;
+  background-color: #888;
+}
+
+/* Spezifische Handle-Styles */
+:deep(.target-handle) {
+  background-color: #888;
+  top: -6px;
+}
+
+:deep(.source-handle) {
+  z-index: 10; /* Stelle sicher, dass sie über dem Inhalt liegen */
+}
+
+:deep(.source-true) {
   background-color: #28a745 !important;
+  bottom: -6px;
 }
 
-.source-false {
+:deep(.source-false) {
   background-color: #dc3545 !important;
+  right: -6px;
 }
 
+/* Rest der Styles bleibt unverändert */
 .condition-node-content {
   padding: 5px;
 }
