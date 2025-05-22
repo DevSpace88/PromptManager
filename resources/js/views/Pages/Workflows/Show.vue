@@ -1,35 +1,35 @@
 <script setup>
-import { ref, onMounted, computed, markRaw } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
-import { VueFlow } from '@vue-flow/core';
-import { Background } from '@vue-flow/background';
-import { Controls } from '@vue-flow/controls';
-import { MiniMap } from '@vue-flow/minimap';
-import { useVueFlow } from '@vue-flow/core';
-import { v4 as uuidv4 } from 'uuid';
+import { ref, onMounted, computed, markRaw } from "vue";
+import { Head, Link, router } from "@inertiajs/vue3";
+import { VueFlow } from "@vue-flow/core";
+import { Background } from "@vue-flow/background";
+import { Controls } from "@vue-flow/controls";
+import { MiniMap } from "@vue-flow/minimap";
+import { useVueFlow } from "@vue-flow/core";
+import { v4 as uuidv4 } from "uuid";
 
 // Ensure CSS is imported
-import '@vue-flow/core/dist/style.css';
-import '@vue-flow/core/dist/theme-default.css';
+import "@vue-flow/core/dist/style.css";
+import "@vue-flow/core/dist/theme-default.css";
 
 // Import node components
-import PromptNode from '@/views/Pages/Workflows/Nodes/PromptNode.vue';
-import ConditionNode from '@/views/Pages/Workflows/Nodes/ConditionNode.vue';
-import InputNode from '@/views/Pages/Workflows/Nodes/InputNode.vue';
-import OutputNode from '@/views/Pages/Workflows/Nodes/OutputNode.vue';
-import ApiNode from '@/views/Pages/Workflows/Nodes/ApiNode.vue';
-import TransformNode from '@/views/Pages/Workflows/Nodes/TransformNode.vue';
+import PromptNode from "@/views/Pages/Workflows/Nodes/PromptNode.vue";
+import ConditionNode from "@/views/Pages/Workflows/Nodes/ConditionNode.vue";
+import InputNode from "@/views/Pages/Workflows/Nodes/InputNode.vue";
+import OutputNode from "@/views/Pages/Workflows/Nodes/OutputNode.vue";
+import ApiNode from "@/views/Pages/Workflows/Nodes/ApiNode.vue";
+import TransformNode from "@/views/Pages/Workflows/Nodes/TransformNode.vue";
 
 // Props
 const props = defineProps({
   workflow: {
     type: Object,
-    required: true
+    required: true,
   },
   recentExecutions: {
     type: Array,
-    default: () => []
-  }
+    default: () => [],
+  },
 });
 
 // Vue Flow instance
@@ -53,36 +53,43 @@ const nodeTypes = {
   inputNode: markRaw(InputNode),
   outputNode: markRaw(OutputNode),
   apiNode: markRaw(ApiNode),
-  transformNode: markRaw(TransformNode)
+  transformNode: markRaw(TransformNode),
 };
 
 // Format date
 const formatDate = (dateString) => {
-  if (!dateString) return 'Never';
+  if (!dateString) return "Never";
   const date = new Date(dateString);
   return date.toLocaleString();
 };
 
 // Get status class
 const getStatusClass = (status) => {
-  switch(status) {
-    case 'completed': return 'bg-success';
-    case 'failed': return 'bg-danger';
-    case 'running': return 'bg-warning';
-    case 'pending': return 'bg-info';
-    default: return 'bg-secondary';
+  switch (status) {
+    case "completed":
+      return "bg-success";
+    case "failed":
+      return "bg-danger";
+    case "running":
+      return "bg-warning";
+    case "pending":
+      return "bg-info";
+    default:
+      return "bg-secondary";
   }
 };
 
 // Show execution modal
 const showExecuteModal = () => {
   // Extract input variables from workflow nodes
-  const inputNodes = props.workflow.nodes.filter(node => node.type === 'input');
+  const inputNodes = props.workflow.nodes.filter(
+    (node) => node.type === "input",
+  );
   const inputData = {};
 
-  inputNodes.forEach(node => {
+  inputNodes.forEach((node) => {
     if (node.data && node.data.variable) {
-      inputData[node.data.variable] = node.data.default_value || '';
+      inputData[node.data.variable] = node.data.default_value || "";
     }
   });
 
@@ -94,35 +101,39 @@ const showExecuteModal = () => {
 const executeWorkflow = () => {
   isExecuting.value = true;
 
-  router.post(route('workflows.execute', props.workflow.id), {
-    input_data: executionInput.value
-  }, {
-    onSuccess: (page) => {
-      executeModal.value.hide();
-      isExecuting.value = false;
+  router.post(
+    route("workflows.execute", props.workflow.id),
+    {
+      input_data: executionInput.value,
+    },
+    {
+      onSuccess: (page) => {
+        executeModal.value.hide();
+        isExecuting.value = false;
 
-      // If there's an execution_id in the response, redirect to execution status
-      if (page.props.execution_id) {
-        router.get(route('executions.status', page.props.execution_id));
-      }
+        // If there's an execution_id in the response, redirect to execution status
+        if (page.props.execution_id) {
+          router.get(route("executions.status", page.props.execution_id));
+        }
+      },
+      onError: () => {
+        isExecuting.value = false;
+      },
     },
-    onError: () => {
-      isExecuting.value = false;
-    },
-  });
+  );
 };
 
 // Initialize flow elements
 const initializeFlow = () => {
   // Set nodes and edges from workflow
-  const nodes = props.workflow.nodes.map(node => ({
+  const nodes = props.workflow.nodes.map((node) => ({
     ...node,
     // Make sure node types match the registered components
     type: `${node.type}Node`,
     // Make sure node is not selected
     selected: false,
     // Make node not draggable in view mode
-    draggable: false
+    draggable: false,
   }));
 
   flowNodes.value = nodes;
@@ -136,29 +147,11 @@ const initializeFlow = () => {
 
 // Has input variables
 const hasInputVariables = computed(() => {
-  const inputNodes = props.workflow.nodes.filter(node => node.type === 'input');
+  const inputNodes = props.workflow.nodes.filter(
+    (node) => node.type === "input",
+  );
   return inputNodes.length > 0;
 });
-
-// Download workflow as JSON
-const downloadWorkflow = () => {
-  const jsonStr = JSON.stringify({
-    name: props.workflow.name,
-    description: props.workflow.description,
-    nodes: props.workflow.nodes,
-    edges: props.workflow.edges,
-    settings: props.workflow.settings
-  }, null, 2);
-
-  const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(jsonStr);
-
-  const link = document.createElement('a');
-  link.setAttribute('href', dataUri);
-  link.setAttribute('download', `${props.workflow.name.replace(/\s+/g, '-').toLowerCase()}.json`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
 
 // // Zoom controls
 // const handleZoomIn = () => {
@@ -187,7 +180,9 @@ const handleFitView = () => {
 
 // Initialize on component mount
 onMounted(() => {
-  executeModal.value = new bootstrap.Modal(document.getElementById('modal-execute-workflow'));
+  executeModal.value = new bootstrap.Modal(
+    document.getElementById("modal-execute-workflow"),
+  );
   initializeFlow();
 });
 </script>
@@ -209,24 +204,51 @@ onMounted(() => {
     </template>
     <template #actions>
       <div class="btn-group me-1">
-        <button type="button" class="btn btn-sm btn-alt-secondary dropdown-toggle" id="dropdown-default-alt-secondary" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <button
+          type="button"
+          class="btn btn-sm btn-alt-secondary dropdown-toggle"
+          id="dropdown-default-alt-secondary"
+          data-bs-toggle="dropdown"
+          aria-haspopup="true"
+          aria-expanded="false"
+        >
           <i class="fa fa-fw fa-cog"></i>
           <span class="d-none d-sm-inline ms-1">Options</span>
         </button>
-        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-default-alt-secondary">
-          <Link :href="route('workflows.edit', workflow.id)" class="dropdown-item">
+        <div
+          class="dropdown-menu dropdown-menu-end"
+          aria-labelledby="dropdown-default-alt-secondary"
+        >
+          <Link
+            :href="route('workflows.edit', workflow.id)"
+            class="dropdown-item"
+          >
             <i class="fa fa-fw fa-pencil-alt me-1"></i> Edit Workflow
           </Link>
-          <button type="button" @click="downloadWorkflow" class="dropdown-item">
+          <a
+            :href="route('workflows.download', { workflow: workflow.id })"
+            class="dropdown-item"
+            download
+          >
             <i class="fa fa-fw fa-download me-1"></i> Export JSON
-          </button>
+          </a>
           <div class="dropdown-divider"></div>
-          <Link :href="route('workflows.destroy', workflow.id)" class="dropdown-item text-danger" method="delete" as="button" preserve-scroll>
+          <Link
+            :href="route('workflows.destroy', workflow.id)"
+            class="dropdown-item text-danger"
+            method="delete"
+            as="button"
+            preserve-scroll
+          >
             <i class="fa fa-fw fa-trash me-1"></i> Delete Workflow
           </Link>
         </div>
       </div>
-      <button @click="showExecuteModal" type="button" class="btn btn-sm btn-primary">
+      <button
+        @click="showExecuteModal"
+        type="button"
+        class="btn btn-sm btn-primary"
+      >
         <i class="fa fa-play opacity-50 me-1"></i> Execute
       </button>
     </template>
@@ -241,9 +263,21 @@ onMounted(() => {
             <div class="row mb-2">
               <div class="col-6 fw-semibold text-muted">Status:</div>
               <div class="col-6">
-                <span :class="{'text-success': workflow.is_active, 'text-danger': !workflow.is_active}">
-                  <i :class="['fa', workflow.is_active ? 'fa-check-circle' : 'fa-times-circle']"></i>
-                  {{ workflow.is_active ? 'Active' : 'Inactive' }}
+                <span
+                  :class="{
+                    'text-success': workflow.is_active,
+                    'text-danger': !workflow.is_active,
+                  }"
+                >
+                  <i
+                    :class="[
+                      'fa',
+                      workflow.is_active
+                        ? 'fa-check-circle'
+                        : 'fa-times-circle',
+                    ]"
+                  ></i>
+                  {{ workflow.is_active ? "Active" : "Inactive" }}
                 </span>
               </div>
             </div>
@@ -257,7 +291,9 @@ onMounted(() => {
             </div>
             <div class="row mb-2">
               <div class="col-6 fw-semibold text-muted">Last Execution:</div>
-              <div class="col-6">{{ formatDate(workflow.last_execution_at) }}</div>
+              <div class="col-6">
+                {{ formatDate(workflow.last_execution_at) }}
+              </div>
             </div>
             <div class="row mb-2">
               <div class="col-6 fw-semibold text-muted">Nodes:</div>
@@ -281,10 +317,14 @@ onMounted(() => {
 
         <BaseBlock v-if="hasInputVariables" title="Input Variables">
           <div class="fs-sm">
-            <div v-for="node in workflow.nodes.filter(n => n.type === 'input')" :key="node.id" class="mb-3">
+            <div
+              v-for="node in workflow.nodes.filter((n) => n.type === 'input')"
+              :key="node.id"
+              class="mb-3"
+            >
               <div class="fw-semibold">{{ node.data.variable }}</div>
               <div class="text-muted">
-                <small>Default: {{ node.data.default_value || 'None' }}</small>
+                <small>Default: {{ node.data.default_value || "None" }}</small>
               </div>
             </div>
           </div>
@@ -293,7 +333,11 @@ onMounted(() => {
 
       <!-- Workflow Diagram -->
       <div class="col-md-6 col-xl-8">
-        <BaseBlock title="Workflow Diagram" options-class="bg-body-light" content-class="p-0">
+        <BaseBlock
+          title="Workflow Diagram"
+          options-class="bg-body-light"
+          content-class="p-0"
+        >
           <div class="workflow-diagram" style="height: 600px">
             <VueFlow
               v-model:nodes="flowNodes"
@@ -374,7 +418,9 @@ onMounted(() => {
       <div v-if="recentExecutions.length === 0" class="text-center py-4">
         <div class="py-4">
           <i class="fa fa-history fa-4x text-muted mb-3"></i>
-          <p class="fs-lg fw-medium text-muted">This workflow hasn't been executed yet.</p>
+          <p class="fs-lg fw-medium text-muted">
+            This workflow hasn't been executed yet.
+          </p>
           <button @click="showExecuteModal" class="btn btn-hero btn-primary">
             <i class="fa fa-play me-1"></i> Execute Now
           </button>
@@ -385,48 +431,63 @@ onMounted(() => {
       <div v-else class="table-responsive">
         <table class="table table-bordered table-striped table-vcenter">
           <thead>
-          <tr>
-            <th style="width: 100px;">ID</th>
-            <th>Status</th>
-            <th class="d-none d-sm-table-cell">Started</th>
-            <th class="d-none d-sm-table-cell">Completed</th>
-            <th class="d-none d-md-table-cell">Duration</th>
-            <th class="text-center" style="width: 100px;">Actions</th>
-          </tr>
+            <tr>
+              <th style="width: 100px">ID</th>
+              <th>Status</th>
+              <th class="d-none d-sm-table-cell">Started</th>
+              <th class="d-none d-sm-table-cell">Completed</th>
+              <th class="d-none d-md-table-cell">Duration</th>
+              <th class="text-center" style="width: 100px">Actions</th>
+            </tr>
           </thead>
           <tbody>
-          <tr v-for="execution in recentExecutions" :key="execution.id">
-            <td>
-              <Link :href="route('executions.status', execution.id)" class="fw-semibold">
-                #{{ execution.id }}
-              </Link>
-            </td>
-            <td>
+            <tr v-for="execution in recentExecutions" :key="execution.id">
+              <td>
+                <Link
+                  :href="route('executions.status', execution.id)"
+                  class="fw-semibold"
+                >
+                  #{{ execution.id }}
+                </Link>
+              </td>
+              <td>
                 <span
                   class="fs-xs fw-semibold d-inline-block py-1 px-3 rounded-pill"
                   :class="getStatusClass(execution.status)"
                 >
                   {{ execution.status }}
                 </span>
-            </td>
-            <td class="d-none d-sm-table-cell">
-              {{ formatDate(execution.started_at) }}
-            </td>
-            <td class="d-none d-sm-table-cell">
-              {{ execution.completed_at ? formatDate(execution.completed_at) : '-' }}
-            </td>
-            <td class="d-none d-md-table-cell">
-              {{ execution.completed_at ?
-              ((new Date(execution.completed_at) - new Date(execution.started_at)) / 1000).toFixed(2) + ' s' :
-              '-'
-              }}
-            </td>
-            <td class="text-center">
-              <Link :href="route('executions.status', execution.id)" class="btn btn-sm btn-alt-secondary">
-                <i class="fa fa-eye"></i>
-              </Link>
-            </td>
-          </tr>
+              </td>
+              <td class="d-none d-sm-table-cell">
+                {{ formatDate(execution.started_at) }}
+              </td>
+              <td class="d-none d-sm-table-cell">
+                {{
+                  execution.completed_at
+                    ? formatDate(execution.completed_at)
+                    : "-"
+                }}
+              </td>
+              <td class="d-none d-md-table-cell">
+                {{
+                  execution.completed_at
+                    ? (
+                        (new Date(execution.completed_at) -
+                          new Date(execution.started_at)) /
+                        1000
+                      ).toFixed(2) + " s"
+                    : "-"
+                }}
+              </td>
+              <td class="text-center">
+                <Link
+                  :href="route('executions.status', execution.id)"
+                  class="btn btn-sm btn-alt-secondary"
+                >
+                  <i class="fa fa-eye"></i>
+                </Link>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -434,14 +495,26 @@ onMounted(() => {
   </div>
 
   <!-- Execute Workflow Modal -->
-  <div class="modal fade" id="modal-execute-workflow" tabindex="-1" role="dialog" aria-labelledby="modal-execute-workflow" aria-hidden="true">
+  <div
+    class="modal fade"
+    id="modal-execute-workflow"
+    tabindex="-1"
+    role="dialog"
+    aria-labelledby="modal-execute-workflow"
+    aria-hidden="true"
+  >
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
         <div class="block block-rounded block-themed block-transparent mb-0">
           <div class="block-header bg-primary">
             <h3 class="block-title">Execute Workflow</h3>
             <div class="block-options">
-              <button type="button" class="btn-block-option" data-bs-dismiss="modal" aria-label="Close">
+              <button
+                type="button"
+                class="btn-block-option"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              >
                 <i class="fa fa-fw fa-times"></i>
               </button>
             </div>
@@ -457,7 +530,9 @@ onMounted(() => {
                 :key="key"
                 class="mb-4"
               >
-                <label class="form-label" :for="`input-${key}`">{{ key }}</label>
+                <label class="form-label" :for="`input-${key}`">{{
+                  key
+                }}</label>
                 <textarea
                   :id="`input-${key}`"
                   v-model="executionInput[key]"
@@ -467,15 +542,23 @@ onMounted(() => {
               </div>
             </div>
             <div v-else>
-              <p class="text-muted">This workflow doesn't require any input variables.</p>
+              <p class="text-muted">
+                This workflow doesn't require any input variables.
+              </p>
             </div>
           </div>
           <div class="block-content block-content-full text-end bg-body">
-            <button type="button" class="btn btn-sm btn-alt-secondary me-1" data-bs-dismiss="modal">Cancel</button>
+            <button
+              type="button"
+              class="btn btn-sm btn-alt-secondary me-1"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
             <button
               type="button"
               class="btn btn-sm btn-primary"
-              :class="{ 'disabled': isExecuting }"
+              :class="{ disabled: isExecuting }"
               @click="executeWorkflow()"
             >
               <i class="fa fa-fw fa-play opacity-50 me-1"></i> Execute
