@@ -854,7 +854,6 @@
 <!--&lt;!&ndash;&lt;!&ndash;}&ndash;&gt;&ndash;&gt;-->
 <!--&lt;!&ndash;&lt;!&ndash;</style>&ndash;&gt;&ndash;&gt;-->
 
-
 <!--&lt;!&ndash;<script setup>&ndash;&gt;-->
 <!--&lt;!&ndash;import { ref, reactive, onMounted, computed, nextTick, onUnmounted, markRaw } from 'vue';&ndash;&gt;-->
 <!--&lt;!&ndash;import { Head, Link, useForm, router } from '@inertiajs/vue3';&ndash;&gt;-->
@@ -1726,7 +1725,6 @@
 <!--&lt;!&ndash;}&ndash;&gt;-->
 <!--&lt;!&ndash;</style>&ndash;&gt;-->
 
-
 <!--&lt;!&ndash; resources/js/views/Pages/Workflows/Edit.vue &ndash;&gt;-->
 <!--<script setup>-->
 <!--import { ref, onMounted, computed } from 'vue';-->
@@ -1938,58 +1936,57 @@
 <!--  </div>-->
 <!--</template>-->
 
-
 <!-- resources/js/views/Pages/Workflows/Edit.vue -->
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { Head, Link, useForm, router } from '@inertiajs/vue3';
-import BasePageHeading from '@/components/BasePageHeading.vue';
+import { ref, onMounted, computed } from "vue";
+import { Head, Link, useForm, router } from "@inertiajs/vue3";
+import BasePageHeading from "@/components/BasePageHeading.vue";
 import WorkflowEditor from "@/components/WorkflowEditor.vue";
 
 // Props
 const props = defineProps({
   workflow: {
     type: Object,
-    required: true
+    required: true,
   },
   prompts: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   apiKeys: {
     type: Array,
-    default: () => []
-  }
+    default: () => [],
+  },
 });
 
 // Form for workflow details
 const form = useForm({
   name: props.workflow.name,
-  description: props.workflow.description || '',
+  description: props.workflow.description || "",
   nodes: props.workflow.nodes || [],
   edges: props.workflow.edges || [],
   settings: props.workflow.settings || {
     autoSave: true,
-    notifyOnCompletion: true
+    notifyOnCompletion: true,
   },
-  is_active: props.workflow.is_active
+  is_active: props.workflow.is_active,
 });
 
 // Debugging - check if prompts are received
-console.log('Edit.vue received prompts:', props.prompts);
-console.log('Edit.vue received workflow:', props.workflow);
+console.log("Edit.vue received prompts:", props.prompts);
+console.log("Edit.vue received workflow:", props.workflow);
 
 // Submit the workflow
 const submit = () => {
   try {
     // Submit the form with current data
-    form.put(route('workflows.update', props.workflow.id), {
+    form.put(route("workflows.update", props.workflow.id), {
       onSuccess: () => {
         console.log("Workflow updated successfully");
       },
       onError: (errors) => {
         console.error("Error updating workflow:", errors);
-      }
+      },
     });
   } catch (error) {
     console.error("Error in submit function:", error);
@@ -2007,7 +2004,7 @@ const updateEdges = (edges) => {
 
 // Cancel editing and return to workflow list
 const cancelEdit = () => {
-  router.get(route('workflows.index'));
+  router.get(route("workflows.index"));
 };
 
 // Update settings from editor component
@@ -2019,14 +2016,17 @@ const updateSetting = ({ key, value }) => {
 
 // Check if the workflow is valid
 const isValid = computed(() => {
-  return form.name.trim() !== '' && form.nodes.length > 0;
+  return form.name.trim() !== "" && form.nodes.length > 0;
 });
 </script>
 
 <template>
   <Head title="Edit Workflow" />
 
-  <BasePageHeading :title="`Edit: ${workflow.name}`" subtitle="Modify your workflow">
+  <BasePageHeading
+    :title="`Edit: ${workflow.name}`"
+    subtitle="Modify your workflow"
+  >
     <template #extra>
       <nav class="breadcrumb push">
         <Link :href="route('dashboard')" class="breadcrumb-item">
@@ -2035,7 +2035,10 @@ const isValid = computed(() => {
         <Link :href="route('workflows.index')" class="breadcrumb-item">
           Workflows
         </Link>
-        <Link :href="route('workflows.show', workflow.id)" class="breadcrumb-item">
+        <Link
+          :href="route('workflows.show', workflow.id)"
+          class="breadcrumb-item"
+        >
           {{ workflow.name }}
         </Link>
         <span class="breadcrumb-item active">Edit</span>
@@ -2055,7 +2058,9 @@ const isValid = computed(() => {
             <div class="row">
               <div class="col-md-6">
                 <div class="mb-4">
-                  <label class="form-label" for="workflow-name">Workflow Name</label>
+                  <label class="form-label" for="workflow-name"
+                    >Workflow Name</label
+                  >
                   <input
                     type="text"
                     id="workflow-name"
@@ -2063,7 +2068,7 @@ const isValid = computed(() => {
                     v-model="form.name"
                     placeholder="Enter workflow name"
                     required
-                  >
+                  />
                   <div v-if="form.errors.name" class="invalid-feedback d-block">
                     {{ form.errors.name }}
                   </div>
@@ -2071,7 +2076,9 @@ const isValid = computed(() => {
               </div>
               <div class="col-md-6">
                 <div class="mb-4">
-                  <label class="form-label" for="workflow-description">Description (optional)</label>
+                  <label class="form-label" for="workflow-description"
+                    >Description (optional)</label
+                  >
                   <textarea
                     id="workflow-description"
                     class="form-control"
@@ -2079,7 +2086,10 @@ const isValid = computed(() => {
                     placeholder="Describe what this workflow does"
                     rows="1"
                   ></textarea>
-                  <div v-if="form.errors.description" class="invalid-feedback d-block">
+                  <div
+                    v-if="form.errors.description"
+                    class="invalid-feedback d-block"
+                  >
                     {{ form.errors.description }}
                   </div>
                 </div>
@@ -2089,13 +2099,19 @@ const isValid = computed(() => {
               <div class="col-md-6">
                 <div class="mb-4">
                   <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="workflow-active" v-model="form.is_active">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="workflow-active"
+                      v-model="form.is_active"
+                    />
                     <label class="form-check-label" for="workflow-active">
                       Workflow is active
                     </label>
                   </div>
                   <div class="fs-sm text-muted mt-1">
-                    When active, this workflow can be executed. Inactive workflows cannot be run.
+                    When active, this workflow can be executed. Inactive
+                    workflows cannot be run.
                   </div>
                 </div>
               </div>
@@ -2138,11 +2154,7 @@ const isValid = computed(() => {
 
     <!-- Action Buttons -->
     <div class="d-flex justify-content-between mb-4">
-      <button
-        type="button"
-        class="btn btn-alt-secondary"
-        @click="cancelEdit"
-      >
+      <button type="button" class="btn btn-alt-secondary" @click="cancelEdit">
         <i class="fa fa-arrow-left opacity-50 me-1"></i> Cancel
       </button>
 

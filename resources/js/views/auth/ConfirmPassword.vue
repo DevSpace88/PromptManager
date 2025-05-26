@@ -28,11 +28,11 @@ const submit = () => {
         <div class="p-4 p-xl-5 flex-grow-1 d-flex align-items-center">
           <div class="w-100">
             <Link href="/" class="link-fx fw-semibold fs-2 text-white">
-              OneUI <span class="fw-normal">Vue</span>
+              AI Prompt <span class="fw-normal">Flow</span>
             </Link>
             <p class="text-white-75 me-xl-8 mt-2">
-              This is a secure area of the application. You will have to verify
-              your password again.
+              Dies ist ein sicherer Bereich der Anwendung. Du musst dein
+              Passwort erneut bestätigen.
             </p>
           </div>
         </div>
@@ -70,16 +70,16 @@ const submit = () => {
       >
         <div class="p-3 w-100 d-lg-none text-center">
           <Link href="/" class="link-fx fw-semibold fs-3 text-dark">
-            OneUI <span class="fw-normal">Vue</span>
+            AI Prompt <span class="fw-normal">Flow</span>
           </Link>
         </div>
         <div class="p-4 w-100 flex-grow-1 d-flex align-items-center">
           <div class="w-100">
             <!-- Header -->
             <div class="text-center mb-5">
-              <h1 class="fw-black mb-2">Secure Area</h1>
+              <h1 class="fw-black mb-2">Sicherer Bereich</h1>
               <p class="fw-medium text-muted">
-                Please confirm your password before continuing.
+                Bitte bestätige dein Passwort, bevor du fortfährst.
               </p>
             </div>
             <!-- END Header -->
@@ -112,7 +112,7 @@ const submit = () => {
                       :class="{ 'opacity-25': form.processing }"
                       :disabled="form.processing"
                     >
-                      Confirm password
+                      Passwort bestätigen
                       <i class="fa fa-fw fa-arrow-right ms-1 opacity-50"></i>
                     </button>
                   </div>

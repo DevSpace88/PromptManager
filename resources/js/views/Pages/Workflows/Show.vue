@@ -307,10 +307,10 @@ onMounted(() => {
         </BaseBlock>
 
         <BaseBlock title="Description">
-          <div v-if="workflow.description" class="fs-sm">
+          <div v-if="workflow.description" class="fs-sm pb-4">
             {{ workflow.description }}
           </div>
-          <div v-else class="fs-sm text-muted fst-italic">
+          <div v-else class="fs-sm text-muted fst-italic pb-4">
             No description provided
           </div>
         </BaseBlock>
