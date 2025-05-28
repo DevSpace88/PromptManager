@@ -31,5 +31,8 @@ COPY . .
 # Port freigeben, auf dem der Server lauschen wird
 EXPOSE 3000
 
+# Umgebungsvariable für den Port setzen (optional, kann auch beim docker run gesetzt werden)
+ENV PORT 3000
+
 # Standard-Startbefehl
 CMD [ "node", "server.js" ]

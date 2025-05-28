@@ -823,6 +823,7 @@ import InputNode from "@/views/Pages/Workflows/Nodes/InputNode.vue";
 import OutputNode from "@/views/Pages/Workflows/Nodes/OutputNode.vue";
 import ApiNode from "@/views/Pages/Workflows/Nodes/ApiNode.vue";
 import TransformNode from "@/views/Pages/Workflows/Nodes/TransformNode.vue";
+import ScraperNode from "@/views/Pages/Workflows/Nodes/ScraperNode.vue";
 
 // Props
 const props = defineProps({
@@ -855,6 +856,7 @@ const nodeTypes = {
   outputNode: markRaw(OutputNode),
   apiNode: markRaw(ApiNode),
   transformNode: markRaw(TransformNode),
+  scraperNode: markRaw(ScraperNode),
 };
 
 // Use Vue Flow instance
@@ -987,6 +989,19 @@ const addTransformNode = () => {
     transformation: "json_parse",
     regex: "",
     code: "",
+  });
+};
+
+// Add Scraper Node function
+const addScraperNode = () => {
+  createNode("scraper", {
+    label: "Scraper", // Default label for the node
+    url: "", // Default empty URL
+    container_selector: "", // Default empty container selector
+    field_selectors: [], // Default empty array for field selectors
+    link_field_name: "", // Default empty link field name
+    link_selector: "", // Default empty link selector
+    output_variable: "scraped_data", // Default output variable name
   });
 };
 
@@ -1331,6 +1346,15 @@ onUnmounted(() => {
           >
             <i class="fa fa-exchange-alt me-1"></i> Transform
           </button>
+
+          <!-- Scraper Node Button -->
+          <button
+            type="button"
+            class="btn btn-alt-success"
+            @click="addScraperNode"
+          >
+            <i class="fa fa-spider me-1"></i> Scraper
+          </button>
         </div>
 
         <div class="fs-sm fw-semibold text-uppercase mt-4 mb-2">
@@ -1621,5 +1645,11 @@ onUnmounted(() => {
 /* This class allows moving the node */
 :deep(.node-drag-handle) {
   cursor: move;
+}
+
+/* Style for ScraperNode in the editor */
+.workflow-canvas :deep(.vue-flow__node-scraperNode) {
+  background-color: rgba(40, 167, 69, 0.1);
+  border-color: #28a745;
 }
 </style>
