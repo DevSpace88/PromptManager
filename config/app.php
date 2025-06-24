@@ -125,5 +125,5 @@ return [
 
 
 
-    'force_https' => env('FORCE_HTTPS', false),
+//    'force_https' => env('FORCE_HTTPS', false),
 ];

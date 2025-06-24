@@ -20,3 +20,5 @@ yarn-error.log
 /.zed
 
 *code_extract*
+composer.lock
+package-lock.json
