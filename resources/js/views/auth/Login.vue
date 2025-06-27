@@ -39,11 +39,11 @@ const submit = () => {
         <div class="p-4 p-xl-5 flex-grow-1 d-flex align-items-center">
           <div class="w-100">
             <Link href="/" class="link-fx fw-semibold fs-2 text-white">
-              OneUI <span class="fw-normal">Vue</span>
+              AI Prompt <span class="fw-normal">Flow</span>
             </Link>
             <p class="text-white-75 me-xl-8 mt-2">
-              Welcome to your amazing app. Feel free to login and get access to
-              your dashboard.
+              Willkommen bei deiner App. Logge dich ein, um auf dein Dashboard
+              zuzugreifen.
             </p>
           </div>
         </div>
@@ -81,7 +81,7 @@ const submit = () => {
       >
         <div class="p-3 w-100 d-lg-none text-center">
           <Link href="/" class="link-fx fw-semibold fs-3 text-dark">
-            OneUI <span class="fw-normal">Vue</span>
+            AI Prompt <span class="fw-normal">Flow</span>
           </Link>
         </div>
         <div class="p-4 w-100 flex-grow-1 d-flex align-items-center">
@@ -90,8 +90,8 @@ const submit = () => {
             <div class="text-center mb-5">
               <h1 class="fw-black mb-2">Log In</h1>
               <p class="fw-medium text-muted">
-                Welcome, please log in or
-                <Link href="/register">create an account</Link>.
+                Willkommen, bitte logge dich ein oder
+                <Link href="/register">erstelle einen Account</Link>.
               </p>
             </div>
             <!-- END Header -->
@@ -158,19 +158,19 @@ const submit = () => {
                           v-model="form.remember"
                         />
                         <label class="form-check-label" for="remember"
-                          >Remember me</label
+                          >Angemeldet bleiben</label
                         >
                       </div>
                     </div>
                     <div>
                       <button
                         type="submit"
-                        class="btn btn-alt-primary"
+                        class="btn btn-alt-primary text-nowrap"
                         :class="{ 'opacity-25': form.processing }"
                         :disabled="form.processing"
                       >
                         <i class="fa fa-fw fa-sign-in-alt me-1 opacity-50"></i>
-                        Log In
+                        Einloggen
                       </button>
                     </div>
                   </div>
@@ -180,7 +180,7 @@ const submit = () => {
                       href="/forgot-password"
                       class="text-muted fs-sm fw-medium d-block d-lg-inline-block mb-1"
                     >
-                      Forgot password?
+                      Passwort vergessen?
                     </Link>
                   </div>
                 </form>

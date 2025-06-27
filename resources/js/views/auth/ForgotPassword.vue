@@ -32,10 +32,10 @@ const submit = () => {
         <div class="p-4 p-xl-5 flex-grow-1 d-flex align-items-center">
           <div class="w-100">
             <Link href="/" class="link-fx fw-semibold fs-2 text-white">
-              OneUI <span class="fw-normal">Vue</span>
+              AI Prompt <span class="fw-normal">Flow</span>
             </Link>
             <p class="text-white-75 me-xl-8 mt-2">
-              Forgot your password? No worries at all. We've got your back!
+              Passwort vergessen? Keine Sorge, wir helfen dir!
             </p>
           </div>
         </div>
@@ -73,17 +73,17 @@ const submit = () => {
       >
         <div class="p-3 w-100 d-lg-none text-center">
           <Link href="/" class="link-fx fw-semibold fs-3 text-dark">
-            OneUI <span class="fw-normal">Vue</span>
+            AI Prompt <span class="fw-normal">Flow</span>
           </Link>
         </div>
         <div class="p-4 w-100 flex-grow-1 d-flex align-items-center">
           <div class="w-100">
             <!-- Header -->
             <div class="text-center mb-5">
-              <h1 class="fw-black mb-2">Forgot Password</h1>
+              <h1 class="fw-black mb-2">Passwort vergessen</h1>
               <p class="fw-medium text-muted">
-                No problem! Just let us know your email and we will email you a
-                password reset link.
+                Kein Problem! Teile uns einfach deine E-Mail-Adresse mit und wir
+                senden dir einen Link zum Zurücksetzen des Passworts.
               </p>
             </div>
             <!-- END Header -->
@@ -128,7 +128,7 @@ const submit = () => {
                       :class="{ 'opacity-25': form.processing }"
                       :disabled="form.processing"
                     >
-                      Email password reset link
+                      Link zum Zurücksetzen des Passworts senden
                       <i class="fa fa-fw fa-arrow-right ms-1 opacity-50"></i>
                     </button>
                   </div>
@@ -137,7 +137,7 @@ const submit = () => {
                       href="/login"
                       class="text-muted fs-sm fw-medium d-block d-lg-inline-block mb-1"
                     >
-                      Did you remember your password?
+                      Passwort wieder eingefallen?
                     </Link>
                   </div>
                 </form>

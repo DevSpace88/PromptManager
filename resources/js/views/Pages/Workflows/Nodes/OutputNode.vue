@@ -1,26 +1,25 @@
-// resources/js/views/Pages/Workflows/Nodes/OutputNode.vue
 <script setup>
-import { ref, computed } from 'vue';
-import { Handle, Position, useVueFlow } from '@vue-flow/core';
+import { ref, computed } from "vue";
+import { Handle, Position, useVueFlow } from "@vue-flow/core";
 
 // Props receiving data from the workflow editor
 const props = defineProps({
   id: {
     type: String,
-    required: true
+    required: true,
   },
   data: {
     type: Object,
-    required: true
+    required: true,
   },
   selected: {
     type: Boolean,
-    default: false
+    default: false,
   },
   isConnectable: {
     type: Boolean,
-    default: true
-  }
+    default: true,
+  },
 });
 
 // Get Vue Flow methods
@@ -29,7 +28,7 @@ const { findNode, setNodes, getNodes } = useVueFlow();
 // Node configuration
 const config = ref({
   showSettings: false,
-  newVariable: ''
+  newVariable: "",
 });
 
 // Available variables in the workflow
@@ -39,25 +38,25 @@ const availableVariables = computed(() => {
   const variables = [];
 
   // Extract variables from nodes
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     if (node.data) {
       // From input nodes
-      if (node.data.type === 'input' && node.data.variable) {
+      if (node.data.type === "input" && node.data.variable) {
         variables.push(node.data.variable);
       }
 
       // From prompt nodes
-      if (node.data.type === 'prompt' && node.data.output_variable) {
+      if (node.data.type === "prompt" && node.data.output_variable) {
         variables.push(node.data.output_variable);
       }
 
       // From API nodes
-      if (node.data.type === 'api' && node.data.output_variable) {
+      if (node.data.type === "api" && node.data.output_variable) {
         variables.push(node.data.output_variable);
       }
 
       // From transform nodes
-      if (node.data.type === 'transform' && node.data.output_variable) {
+      if (node.data.type === "transform" && node.data.output_variable) {
         variables.push(node.data.output_variable);
       }
     }
@@ -81,11 +80,11 @@ const updateNodeData = (key, value) => {
     ...node,
     data: {
       ...node.data,
-      [key]: value
-    }
+      [key]: value,
+    },
   };
 
-  setNodes((nodes) => nodes.map(n => n.id === props.id ? newNode : n));
+  setNodes((nodes) => nodes.map((n) => (n.id === props.id ? newNode : n)));
 };
 
 // Add variable to output
@@ -96,10 +95,10 @@ const addVariable = () => {
 
   if (!variables.includes(config.value.newVariable)) {
     variables.push(config.value.newVariable);
-    updateNodeData('variables', variables);
+    updateNodeData("variables", variables);
   }
 
-  config.value.newVariable = '';
+  config.value.newVariable = "";
 };
 
 // Remove variable from output
@@ -109,13 +108,13 @@ const removeVariable = (variable) => {
 
   if (index !== -1) {
     variables.splice(index, 1);
-    updateNodeData('variables', variables);
+    updateNodeData("variables", variables);
   }
 };
 </script>
 
 <template>
-  <div :class="['output-node', { 'selected': selected }]">
+  <div :class="['output-node', { selected: selected }]">
     <!-- Target Handle (Input) -->
     <Handle
       type="target"
@@ -135,7 +134,12 @@ const removeVariable = (variable) => {
           @click="toggleSettings"
           :title="config.showSettings ? 'Hide settings' : 'Show settings'"
         >
-          <i :class="['fa', config.showSettings ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
+          <i
+            :class="[
+              'fa',
+              config.showSettings ? 'fa-chevron-up' : 'fa-chevron-down',
+            ]"
+          ></i>
         </button>
       </div>
 
@@ -161,7 +165,10 @@ const removeVariable = (variable) => {
                   <i class="fa fa-times"></i>
                 </button>
               </div>
-              <div v-if="!data.variables || data.variables.length === 0" class="output-no-variables">
+              <div
+                v-if="!data.variables || data.variables.length === 0"
+                class="output-no-variables"
+              >
                 No output variables selected
               </div>
             </div>
@@ -194,7 +201,9 @@ const removeVariable = (variable) => {
             </div>
           </div>
 
-          <div class="setting-help">These variables will be included in the workflow result</div>
+          <div class="setting-help">
+            These variables will be included in the workflow result
+          </div>
         </div>
 
         <!-- Format Options -->
@@ -218,11 +227,15 @@ const removeVariable = (variable) => {
       <div v-else class="output-node-summary">
         <div class="output-variables">
           <span v-for="(variable, index) in data.variables" :key="variable">
-            {{ variable }}{{ index < data.variables.length - 1 ? ', ' : '' }}
+            {{ variable }}{{ index < data.variables.length - 1 ? ", " : "" }}
           </span>
-          <span v-if="!data.variables || data.variables.length === 0" class="text-muted">No variables</span>
+          <span
+            v-if="!data.variables || data.variables.length === 0"
+            class="text-muted"
+            >No variables</span
+          >
         </div>
-        <div class="output-format">Format: {{ data.format || 'JSON' }}</div>
+        <div class="output-format">Format: {{ data.format || "JSON" }}</div>
       </div>
     </div>
   </div>

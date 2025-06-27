@@ -35,10 +35,11 @@ const verificationLinkSent = computed(
         <div class="p-4 p-xl-5 flex-grow-1 d-flex align-items-center">
           <div class="w-100">
             <Link href="/" class="link-fx fw-semibold fs-2 text-white">
-              OneUI <span class="fw-normal">Vue</span>
+              AI Prompt <span class="fw-normal">Flow</span>
             </Link>
             <p class="text-white-75 me-xl-8 mt-2">
-              We are almost there, please verify your email to continue!
+              Wir sind fast da, bitte bestätige deine E-Mail-Adresse, um
+              fortzufahren!
             </p>
           </div>
         </div>
@@ -76,17 +77,18 @@ const verificationLinkSent = computed(
       >
         <div class="p-3 w-100 d-lg-none text-center">
           <Link href="/" class="link-fx fw-semibold fs-3 text-dark">
-            OneUI <span class="fw-normal">Vue</span>
+            AI Prompt <span class="fw-normal">Flow</span>
           </Link>
         </div>
         <div class="p-4 w-100 flex-grow-1 d-flex align-items-center">
           <div class="w-100">
             <!-- Header -->
             <div class="text-center mb-5">
-              <h1 class="fw-black mb-2">Email Verification</h1>
+              <h1 class="fw-black mb-2">E-Mail Bestätigung</h1>
               <p class="fw-medium text-muted">
-                Before getting started, could you verify your email address by
-                clicking on the link we just emailed to you?
+                Bevor du loslegst, könntest du bitte deine E-Mail-Adresse
+                bestätigen, indem du auf den Link klickst, den wir dir gerade
+                per E-Mail geschickt haben?
               </p>
             </div>
             <!-- END Header -->
@@ -103,8 +105,8 @@ const verificationLinkSent = computed(
                     class="fa fa-check-circle me-2 opacity-50 flex-shrink-0"
                   ></i>
                   <span>
-                    A new verification link has been sent to the email address
-                    you provided during registration.
+                    Ein neuer Bestätigungslink wurde an die E-Mail-Adresse
+                    gesendet, die du bei der Registrierung angegeben hast.
                   </span>
                 </div>
 
@@ -116,7 +118,7 @@ const verificationLinkSent = computed(
                       :class="{ 'opacity-25': form.processing }"
                       :disabled="form.processing"
                     >
-                      Resend Verification Email
+                      Bestätigungsmail erneut senden
                       <i class="fa fa-fw fa-arrow-right ms-1 opacity-50"></i>
                     </button>
                   </div>
@@ -129,7 +131,7 @@ const verificationLinkSent = computed(
                         as="button"
                       >
                         <i class="fa fa-fw fa-sign-out-alt me-1 opacity-50"></i>
-                        Log out
+                        Ausloggen
                       </Link>
                     </div>
                   </div>

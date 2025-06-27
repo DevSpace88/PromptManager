@@ -19,6 +19,7 @@ import InputNode from "@/views/Pages/Workflows/Nodes/InputNode.vue";
 import OutputNode from "@/views/Pages/Workflows/Nodes/OutputNode.vue";
 import ApiNode from "@/views/Pages/Workflows/Nodes/ApiNode.vue";
 import TransformNode from "@/views/Pages/Workflows/Nodes/TransformNode.vue";
+import ScraperNode from "@/views/Pages/Workflows/Nodes/ScraperNode.vue";
 
 // Props
 const props = defineProps({
@@ -54,6 +55,7 @@ const nodeTypes = {
   outputNode: markRaw(OutputNode),
   apiNode: markRaw(ApiNode),
   transformNode: markRaw(TransformNode),
+  scraperNode: markRaw(ScraperNode),
 };
 
 // Format date
@@ -152,19 +154,6 @@ const hasInputVariables = computed(() => {
   );
   return inputNodes.length > 0;
 });
-
-// // Zoom controls
-// const handleZoomIn = () => {
-//   vueFlow.zoomIn();
-// };
-//
-// const handleZoomOut = () => {
-//   vueFlow.zoomOut();
-// };
-//
-// const handleFitView = () => {
-//   vueFlow.fitView();
-// };
 
 const handleZoomIn = () => {
   vueFlow.zoomIn?.();
@@ -307,10 +296,10 @@ onMounted(() => {
         </BaseBlock>
 
         <BaseBlock title="Description">
-          <div v-if="workflow.description" class="fs-sm">
+          <div v-if="workflow.description" class="fs-sm pb-4">
             {{ workflow.description }}
           </div>
-          <div v-else class="fs-sm text-muted fst-italic">
+          <div v-else class="fs-sm text-muted fst-italic pb-4">
             No description provided
           </div>
         </BaseBlock>
@@ -608,6 +597,11 @@ onMounted(() => {
 .workflow-canvas .vue-flow__node-transformNode {
   background-color: rgba(108, 117, 125, 0.1);
   border-color: #6c757d;
+}
+
+.workflow-canvas .vue-flow__node-scraperNode {
+  background-color: rgba(40, 167, 69, 0.1);
+  border-color: #28a745;
 }
 
 .workflow-canvas .vue-flow__edge-path {

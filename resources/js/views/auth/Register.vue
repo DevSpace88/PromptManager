@@ -32,10 +32,11 @@ const submit = () => {
         <div class="p-4 p-xl-5 flex-grow-1 d-flex align-items-center">
           <div class="w-100">
             <Link href="/" class="link-fx fw-semibold fs-2 text-white">
-              OneUI <span class="fw-normal">Vue</span>
+              AI Prompt <span class="fw-normal">Flow</span>
             </Link>
             <p class="text-white-75 me-xl-8 mt-2">
-              Create an account and get access to your dashboard today.
+              Erstelle einen Account und erhalte noch heute Zugriff auf dein
+              Dashboard.
             </p>
           </div>
         </div>
@@ -73,16 +74,16 @@ const submit = () => {
       >
         <div class="p-3 w-100 d-lg-none text-center">
           <Link href="/" class="link-fx fw-semibold fs-3 text-dark">
-            OneUI <span class="fw-normal">Vue</span>
+            AI Prompt <span class="fw-normal">Flow</span>
           </Link>
         </div>
         <div class="p-4 w-100 flex-grow-1 d-flex align-items-center">
           <div class="w-100">
             <!-- Header -->
             <div class="text-center mb-5">
-              <h1 class="fw-black mb-2">Create an Account</h1>
+              <h1 class="fw-black mb-2">Account erstellen</h1>
               <p class="fw-medium text-muted">
-                Welcome, feel free to create your account in one simple step.
+                Willkommen, erstelle deinen Account in einem einfachen Schritt.
               </p>
             </div>
             <!-- END Header -->
@@ -173,7 +174,7 @@ const submit = () => {
                         href="/login"
                         class="text-muted fs-sm fw-medium d-block d-lg-inline-block mb-1"
                       >
-                        Already registered?
+                        Bereits registriert?
                       </Link>
                     </div>
                     <div>
@@ -184,7 +185,7 @@ const submit = () => {
                         :disabled="form.processing"
                       >
                         <i class="fa fa-fw fa-sign-in-alt me-1 opacity-50"></i>
-                        Register
+                        Registrieren
                       </button>
                     </div>
                   </div>

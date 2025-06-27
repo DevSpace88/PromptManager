@@ -211,7 +211,6 @@
 <!--  updateEdges([...flowEdges.value, newEdge]);-->
 <!--};-->
 
-
 <!--// Track changes to nodes and edges-->
 <!--const onNodesChange = (changes) => {-->
 <!--  const updatedNodes = vueFlow.applyNodeChanges(changes, flowNodes.value);-->
@@ -794,50 +793,60 @@
 
 <!-- resources/js/Components/WorkflowEditor.vue -->
 <script setup>
-import { ref, reactive, onMounted, computed, nextTick, onUnmounted, watch, markRaw } from 'vue';
+import {
+  ref,
+  reactive,
+  onMounted,
+  computed,
+  nextTick,
+  onUnmounted,
+  watch,
+  markRaw,
+} from "vue";
 
 // Import Vue Flow
-import { VueFlow } from '@vue-flow/core';
-import { Background } from '@vue-flow/background';
-import { Controls } from '@vue-flow/controls';
-import { MiniMap } from '@vue-flow/minimap';
-import { Panel } from '@vue-flow/core';
-import { useVueFlow } from '@vue-flow/core';
-import { v4 as uuidv4 } from 'uuid';
+import { VueFlow } from "@vue-flow/core";
+import { Background } from "@vue-flow/background";
+import { Controls } from "@vue-flow/controls";
+import { MiniMap } from "@vue-flow/minimap";
+import { Panel } from "@vue-flow/core";
+import { useVueFlow } from "@vue-flow/core";
+import { v4 as uuidv4 } from "uuid";
 
-import '@vue-flow/core/dist/style.css';
-import '@vue-flow/core/dist/theme-default.css';
+import "@vue-flow/core/dist/style.css";
+import "@vue-flow/core/dist/theme-default.css";
 
 // Import custom node types - pass prompts to nodes
-import PromptNode from '@/views/Pages/Workflows/Nodes/PromptNode.vue';
-import ConditionNode from '@/views/Pages/Workflows/Nodes/ConditionNode.vue';
-import InputNode from '@/views/Pages/Workflows/Nodes/InputNode.vue';
-import OutputNode from '@/views/Pages/Workflows/Nodes/OutputNode.vue';
-import ApiNode from '@/views/Pages/Workflows/Nodes/ApiNode.vue';
-import TransformNode from '@/views/Pages/Workflows/Nodes/TransformNode.vue';
+import PromptNode from "@/views/Pages/Workflows/Nodes/PromptNode.vue";
+import ConditionNode from "@/views/Pages/Workflows/Nodes/ConditionNode.vue";
+import InputNode from "@/views/Pages/Workflows/Nodes/InputNode.vue";
+import OutputNode from "@/views/Pages/Workflows/Nodes/OutputNode.vue";
+import ApiNode from "@/views/Pages/Workflows/Nodes/ApiNode.vue";
+import TransformNode from "@/views/Pages/Workflows/Nodes/TransformNode.vue";
+import ScraperNode from "@/views/Pages/Workflows/Nodes/ScraperNode.vue";
 
 // Props
 const props = defineProps({
   initialNodes: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   initialEdges: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   prompts: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   apiKeys: {
     type: Array,
-    default: () => []
-  }
+    default: () => [],
+  },
 });
 
 // Emit events up to parent
-const emit = defineEmits(['update:nodes', 'update:edges', 'update:setting']);
+const emit = defineEmits(["update:nodes", "update:edges", "update:setting"]);
 
 // Node types registration - use markRaw to prevent reactivity warnings
 const nodeTypes = {
@@ -846,7 +855,8 @@ const nodeTypes = {
   inputNode: markRaw(InputNode),
   outputNode: markRaw(OutputNode),
   apiNode: markRaw(ApiNode),
-  transformNode: markRaw(TransformNode)
+  transformNode: markRaw(TransformNode),
+  scraperNode: markRaw(ScraperNode),
 };
 
 // Use Vue Flow instance
@@ -857,31 +867,34 @@ const flowNodes = ref([]);
 const flowEdges = ref([]);
 
 // Sidebar state
-const activePanel = ref('nodes');
+const activePanel = ref("nodes");
 const initialNodesCreated = ref(false);
 const isFullscreen = ref(false);
 const workflowBuilder = ref(null);
 
 // Debug output for prompts
-console.log('WorkflowEditor received prompts:', props.prompts);
+console.log("WorkflowEditor received prompts:", props.prompts);
 
 // Method to safely update nodes
 const updateNodes = (newNodes) => {
   flowNodes.value = newNodes;
   vueFlow.setNodes(newNodes);
-  emit('update:nodes', newNodes.map(node => ({
-    id: node.id,
-    type: node.data?.type || '',
-    position: node.position || { x: 0, y: 0 },
-    data: node.data || {}
-  })));
+  emit(
+    "update:nodes",
+    newNodes.map((node) => ({
+      id: node.id,
+      type: node.data?.type || "",
+      position: node.position || { x: 0, y: 0 },
+      data: node.data || {},
+    })),
+  );
 };
 
 // Method to safely update edges
 const updateEdges = (newEdges) => {
   flowEdges.value = newEdges;
   vueFlow.setEdges(newEdges);
-  emit('update:edges', newEdges);
+  emit("update:edges", newEdges);
 };
 
 // Create a new node
@@ -889,13 +902,13 @@ const createNode = (type, data = {}) => {
   const id = `node-${uuidv4()}`;
 
   // For Prompt-Nodes, add the prompts directly
-  if (type === 'prompt') {
-    console.log('Adding prompts to prompt node:', props.prompts);
+  if (type === "prompt") {
+    console.log("Adding prompts to prompt node:", props.prompts);
     // Don't clone the array, use direct reference to avoid proxy issues
     data.prompts = props.prompts;
 
     // Debug output
-    console.log('Node data with prompts:', data);
+    console.log("Node data with prompts:", data);
   }
 
   const nodeData = {
@@ -905,13 +918,13 @@ const createNode = (type, data = {}) => {
     data: {
       ...data,
       label: data.label || `${type.charAt(0).toUpperCase() + type.slice(1)}`,
-      type: type
-    }
+      type: type,
+    },
   };
 
   // Additional debug for prompt nodes
-  if (type === 'prompt') {
-    console.log('Final prompt node data:', nodeData.data);
+  if (type === "prompt") {
+    console.log("Final prompt node data:", nodeData.data);
   }
 
   // Update nodes by creating a new array
@@ -921,67 +934,80 @@ const createNode = (type, data = {}) => {
 
 // Add different types of nodes
 const addPromptNode = () => {
-  createNode('prompt', {
-    label: 'Prompt',
-    content: '',
+  createNode("prompt", {
+    label: "Prompt",
+    content: "",
     prompt_id: null,
-    provider: 'openai',
-    model: 'gpt-4',
+    provider: "openai",
+    model: "gpt-4",
     temperature: 0.7,
     max_tokens: 2000,
-    output_variable: 'result'
+    output_variable: "result",
   });
 };
 
 const addConditionNode = () => {
-  createNode('condition', {
-    label: 'Condition',
-    condition: '',
+  createNode("condition", {
+    label: "Condition",
+    condition: "",
     true_path: null,
-    false_path: null
+    false_path: null,
   });
 };
 
 const addInputNode = () => {
-  createNode('input', {
-    label: 'Input',
-    variable: '',
-    default_value: ''
+  createNode("input", {
+    label: "Input",
+    variable: "",
+    default_value: "",
   });
 };
 
 const addOutputNode = () => {
-  createNode('output', {
-    label: 'Output',
-    variables: []
+  createNode("output", {
+    label: "Output",
+    variables: [],
   });
 };
 
 const addApiNode = () => {
-  createNode('api', {
-    label: 'API Call',
-    url: '',
-    method: 'GET',
+  createNode("api", {
+    label: "API Call",
+    url: "",
+    method: "GET",
     headers: {},
     body: {},
-    output_variable: 'api_result'
+    output_variable: "api_result",
   });
 };
 
 const addTransformNode = () => {
-  createNode('transform', {
-    label: 'Transform',
-    input_variable: '',
-    output_variable: '',
-    transformation: 'json_parse',
-    regex: '',
-    code: ''
+  createNode("transform", {
+    label: "Transform",
+    input_variable: "",
+    output_variable: "",
+    transformation: "json_parse",
+    regex: "",
+    code: "",
+  });
+};
+
+// Add Scraper Node function
+const addScraperNode = () => {
+  createNode("scraper", {
+    label: "Scraper", // Default label for the node
+    url: "", // Default empty URL
+    container_selector: "", // Default empty container selector
+    field_selectors: [], // Default empty array for field selectors
+    link_field_name: "", // Default empty link field name
+    link_selector: "", // Default empty link selector
+    output_variable: "scraped_data", // Default output variable name
   });
 };
 
 // Handle connection between nodes
 const onConnect = (params) => {
-  console.log('Connection params:', params); // Debug info
+  console.log("Connection params:", params); // Debug info
 
   const newEdge = {
     id: `edge-${uuidv4()}`,
@@ -992,8 +1018,8 @@ const onConnect = (params) => {
     animated: true,
     // Additional data for conditions
     data: {
-      condition: params.sourceHandle?.includes('true') ? 'true' : 'false'
-    }
+      condition: params.sourceHandle?.includes("true") ? "true" : "false",
+    },
   };
 
   updateEdges([...flowEdges.value, newEdge]);
@@ -1005,12 +1031,15 @@ const onNodesChange = (changes) => {
   flowNodes.value = updatedNodes;
 
   // Emit updated nodes
-  emit('update:nodes', updatedNodes.map(node => ({
-    id: node.id,
-    type: node.data?.type || '',
-    position: node.position || { x: 0, y: 0 },
-    data: node.data || {}
-  })));
+  emit(
+    "update:nodes",
+    updatedNodes.map((node) => ({
+      id: node.id,
+      type: node.data?.type || "",
+      position: node.position || { x: 0, y: 0 },
+      data: node.data || {},
+    })),
+  );
 };
 
 const onEdgesChange = (changes) => {
@@ -1018,7 +1047,7 @@ const onEdgesChange = (changes) => {
   flowEdges.value = updatedEdges;
 
   // Emit updated edges
-  emit('update:edges', updatedEdges);
+  emit("update:edges", updatedEdges);
 };
 
 // Initialize with workflow nodes and edges or create default ones
@@ -1027,10 +1056,10 @@ const initializeWorkflow = () => {
 
   if (props.initialNodes && props.initialNodes.length > 0) {
     // Format nodes to match VueFlow requirements
-    const nodes = props.initialNodes.map(node => {
+    const nodes = props.initialNodes.map((node) => {
       // Add prompts to each prompt node
-      if (node.type === 'prompt') {
-        console.log('Adding prompts to existing prompt node:', props.prompts);
+      if (node.type === "prompt") {
+        console.log("Adding prompts to existing prompt node:", props.prompts);
 
         // Ensure node.data exists
         if (!node.data) node.data = {};
@@ -1039,7 +1068,7 @@ const initializeWorkflow = () => {
         node.data.prompts = props.prompts;
 
         // Debug output
-        console.log('Updated prompt node:', node);
+        console.log("Updated prompt node:", node);
       }
 
       return {
@@ -1049,7 +1078,7 @@ const initializeWorkflow = () => {
       };
     });
 
-    console.log('Prepared nodes with prompts:', nodes);
+    console.log("Prepared nodes with prompts:", nodes);
     updateNodes(nodes);
   } else {
     // If no nodes, add default nodes
@@ -1059,25 +1088,25 @@ const initializeWorkflow = () => {
     const initialNodes = [
       {
         id: inputNodeId,
-        type: 'inputNode',
+        type: "inputNode",
         position: { x: 250, y: 100 },
         data: {
-          label: 'Input',
-          variable: 'input',
-          default_value: '',
-          type: 'input'
-        }
+          label: "Input",
+          variable: "input",
+          default_value: "",
+          type: "input",
+        },
       },
       {
         id: outputNodeId,
-        type: 'outputNode',
+        type: "outputNode",
         position: { x: 250, y: 300 },
         data: {
-          label: 'Output',
-          variables: ['result'],
-          type: 'output'
-        }
-      }
+          label: "Output",
+          variables: ["result"],
+          type: "output",
+        },
+      },
     ];
 
     updateNodes(initialNodes);
@@ -1085,12 +1114,12 @@ const initializeWorkflow = () => {
 
   if (props.initialEdges && props.initialEdges.length > 0) {
     // Enhance edges with properties needed for animation and proper connection
-    const enhancedEdges = props.initialEdges.map(edge => ({
+    const enhancedEdges = props.initialEdges.map((edge) => ({
       ...edge,
       animated: true,
       // Ensure sourceHandle and targetHandle exist
       sourceHandle: edge.sourceHandle || null,
-      targetHandle: edge.targetHandle || null
+      targetHandle: edge.targetHandle || null,
     }));
     updateEdges(enhancedEdges);
   }
@@ -1106,37 +1135,45 @@ const initializeWorkflow = () => {
 };
 
 // Watch for changes in props to reinitialize if needed
-watch(() => props.initialNodes, (newNodes) => {
-  if (newNodes && newNodes.length > 0 && !initialNodesCreated.value) {
-    initializeWorkflow();
-  }
-}, { immediate: false });
+watch(
+  () => props.initialNodes,
+  (newNodes) => {
+    if (newNodes && newNodes.length > 0 && !initialNodesCreated.value) {
+      initializeWorkflow();
+    }
+  },
+  { immediate: false },
+);
 
-watch(() => props.prompts, (newPrompts) => {
-  console.log('Prompts changed:', newPrompts);
+watch(
+  () => props.prompts,
+  (newPrompts) => {
+    console.log("Prompts changed:", newPrompts);
 
-  // Update prompts in existing prompt nodes
-  if (flowNodes.value && flowNodes.value.length > 0) {
-    const updatedNodes = flowNodes.value.map(node => {
-      if (node.type === 'promptNode' && node.data) {
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            prompts: newPrompts // Direct reference, no cloning
-          }
-        };
-      }
-      return node;
-    });
+    // Update prompts in existing prompt nodes
+    if (flowNodes.value && flowNodes.value.length > 0) {
+      const updatedNodes = flowNodes.value.map((node) => {
+        if (node.type === "promptNode" && node.data) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              prompts: newPrompts, // Direct reference, no cloning
+            },
+          };
+        }
+        return node;
+      });
 
-    updateNodes(updatedNodes);
-  }
-}, { deep: true });
+      updateNodes(updatedNodes);
+    }
+  },
+  { deep: true },
+);
 
 // Function to update parent form settings
 const updateParentSetting = (key, value) => {
-  emit('update:setting', { key, value });
+  emit("update:setting", { key, value });
 };
 
 // Fullscreen toggle function
@@ -1164,7 +1201,7 @@ const handleFullscreenChange = () => {
 // Handle keyboard events for node/edge deletion
 const handleKeyDown = (event) => {
   // Only allow Delete key and only when not in an input or textarea
-  if (event.key === 'Delete' && !event.target.closest('input, textarea')) {
+  if (event.key === "Delete" && !event.target.closest("input, textarea")) {
     deleteSelected();
   }
 };
@@ -1172,18 +1209,18 @@ const handleKeyDown = (event) => {
 // Delete selected nodes and edges
 const deleteSelected = () => {
   // Get selected nodes and edges
-  const selectedNodes = flowNodes.value.filter(node => node.selected);
-  const selectedEdges = flowEdges.value.filter(edge => edge.selected);
+  const selectedNodes = flowNodes.value.filter((node) => node.selected);
+  const selectedEdges = flowEdges.value.filter((edge) => edge.selected);
 
   if (selectedNodes.length > 0) {
     // Create a new array without the selected nodes
-    const newNodes = flowNodes.value.filter(node => !node.selected);
+    const newNodes = flowNodes.value.filter((node) => !node.selected);
     updateNodes(newNodes);
   }
 
   if (selectedEdges.length > 0) {
     // Create a new array without the selected edges
-    const newEdges = flowEdges.value.filter(edge => !edge.selected);
+    const newEdges = flowEdges.value.filter((edge) => !edge.selected);
     updateEdges(newEdges);
   }
 };
@@ -1203,36 +1240,47 @@ const handleFitView = () => {
 
 // Set up on mount
 onMounted(() => {
-  document.addEventListener('fullscreenchange', handleFullscreenChange);
+  document.addEventListener("fullscreenchange", handleFullscreenChange);
 
   // Use nextTick to ensure Vue Flow is mounted before adding nodes
   nextTick(() => {
-    console.log('WorkflowEditor mounted, initializing workflow');
+    console.log("WorkflowEditor mounted, initializing workflow");
     initializeWorkflow();
   });
 });
 
 // Clean up on unmount
 onUnmounted(() => {
-  document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  document.removeEventListener("fullscreenchange", handleFullscreenChange);
 });
 </script>
 
 <template>
   <div
     class="workflow-builder"
-    :class="{'fullscreen': isFullscreen}"
+    :class="{ fullscreen: isFullscreen }"
     ref="workflowBuilder"
-    style="height: 600px; position: relative;"
+    style="height: 600px; position: relative"
   >
     <!-- Sidebar -->
-    <div class="workflow-sidebar bg-body-light border-end p-3" style="width: 260px; height: 100%; position: absolute; left: 0; top: 0; overflow-y: auto; z-index: 10;">
+    <div
+      class="workflow-sidebar bg-body-light border-end p-3"
+      style="
+        width: 260px;
+        height: 100%;
+        position: absolute;
+        left: 0;
+        top: 0;
+        overflow-y: auto;
+        z-index: 10;
+      "
+    >
       <!-- Sidebar Tabs -->
       <ul class="nav nav-tabs nav-tabs-block" role="tablist">
         <li class="nav-item" role="presentation">
           <button
             class="nav-link"
-            :class="{'active': activePanel === 'nodes'}"
+            :class="{ active: activePanel === 'nodes' }"
             @click="activePanel = 'nodes'"
           >
             <i class="fa fa-cubes me-1"></i> Nodes
@@ -1241,7 +1289,7 @@ onUnmounted(() => {
         <li class="nav-item" role="presentation">
           <button
             class="nav-link"
-            :class="{'active': activePanel === 'properties'}"
+            :class="{ active: activePanel === 'properties' }"
             @click="activePanel = 'properties'"
           >
             <i class="fa fa-cog me-1"></i> Properties
@@ -1272,11 +1320,7 @@ onUnmounted(() => {
           </button>
 
           <!-- Input Node -->
-          <button
-            type="button"
-            class="btn btn-alt-info"
-            @click="addInputNode"
-          >
+          <button type="button" class="btn btn-alt-info" @click="addInputNode">
             <i class="fa fa-sign-in-alt me-1"></i> Input
           </button>
 
@@ -1290,11 +1334,7 @@ onUnmounted(() => {
           </button>
 
           <!-- API Node -->
-          <button
-            type="button"
-            class="btn btn-alt-danger"
-            @click="addApiNode"
-          >
+          <button type="button" class="btn btn-alt-danger" @click="addApiNode">
             <i class="fa fa-globe me-1"></i> API Call
           </button>
 
@@ -1306,9 +1346,20 @@ onUnmounted(() => {
           >
             <i class="fa fa-exchange-alt me-1"></i> Transform
           </button>
+
+          <!-- Scraper Node Button -->
+          <button
+            type="button"
+            class="btn btn-alt-success"
+            @click="addScraperNode"
+          >
+            <i class="fa fa-spider me-1"></i> Scraper
+          </button>
         </div>
 
-        <div class="fs-sm fw-semibold text-uppercase mt-4 mb-2">Instructions</div>
+        <div class="fs-sm fw-semibold text-uppercase mt-4 mb-2">
+          Instructions
+        </div>
         <ul class="fs-sm text-muted ps-3">
           <li>Add nodes to build your workflow</li>
           <li>Connect nodes by dragging from one node to another</li>
@@ -1319,11 +1370,13 @@ onUnmounted(() => {
         </ul>
 
         <!-- Debug Info -->
-        <div class="alert alert-info mt-4">
+        <!-- <div class="alert alert-info mt-4">
           <p class="mb-1"><strong>Debug Info:</strong></p>
           <p class="mb-1">Prompts available: {{ prompts.length }}</p>
-          <p class="mb-0" v-if="prompts.length > 0">First prompt: {{ prompts[0].name }}</p>
-        </div>
+          <p class="mb-0" v-if="prompts.length > 0">
+            First prompt: {{ prompts[0].name }}
+          </p>
+        </div> -->
       </div>
 
       <!-- Properties Panel -->
@@ -1345,8 +1398,8 @@ onUnmounted(() => {
               type="checkbox"
               id="workflow-autosave"
               :checked="false"
-              @change="e => updateParentSetting('autoSave', e.target.checked)"
-            >
+              @change="(e) => updateParentSetting('autoSave', e.target.checked)"
+            />
             <label class="form-check-label" for="workflow-autosave">
               Auto save workflow on execution
             </label>
@@ -1358,8 +1411,11 @@ onUnmounted(() => {
               type="checkbox"
               id="workflow-notify"
               :checked="false"
-              @change="e => updateParentSetting('notifyOnCompletion', e.target.checked)"
-            >
+              @change="
+                (e) =>
+                  updateParentSetting('notifyOnCompletion', e.target.checked)
+              "
+            />
             <label class="form-check-label" for="workflow-notify">
               Notify on workflow completion
             </label>
@@ -1440,7 +1496,9 @@ onUnmounted(() => {
               title="Toggle Fullscreen"
               @click="toggleFullscreen"
             >
-              <i :class="['fa', isFullscreen ? 'fa-compress' : 'fa-expand']"></i>
+              <i
+                :class="['fa', isFullscreen ? 'fa-compress' : 'fa-expand']"
+              ></i>
             </button>
           </div>
         </Panel>
@@ -1587,5 +1645,11 @@ onUnmounted(() => {
 /* This class allows moving the node */
 :deep(.node-drag-handle) {
   cursor: move;
+}
+
+/* Style for ScraperNode in the editor */
+.workflow-canvas :deep(.vue-flow__node-scraperNode) {
+  background-color: rgba(40, 167, 69, 0.1);
+  border-color: #28a745;
 }
 </style>

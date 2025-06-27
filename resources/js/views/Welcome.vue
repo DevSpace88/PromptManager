@@ -1,7 +1,7 @@
 <script setup></script>
 
 <template>
-  <Head title="Welcome to your app" />
+  <Head title="Welcome to AI Prompt Flow" />
 
   <!-- Hero -->
   <div class="bg-body-extra-light">
@@ -9,56 +9,33 @@
       <div class="row justify-content-center py-8">
         <div class="col-lg-9">
           <div class="d-flex align-items-center justify-content-center gap-3">
-            <i class="fab fa-3x fa-laravel" style="color: #f72c1f"></i>
-            +
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 500 500"
-              class="d-inline-block"
-              style="width: 44px; height: 44px"
-            >
-              <rect width="500" height="500" fill="url(#a)" rx="250" />
-              <path fill="#fff" d="M184 165H95l86 86-86 86h89l86-86-86-86Z" />
-              <path
-                fill="#fff"
-                d="M318.5 165h-89l86 86-86 86h89l86-86-86-86Z"
-              />
-              <defs>
-                <linearGradient
-                  id="a"
-                  x1="35"
-                  x2="632.5"
-                  y1="377.5"
-                  y2="65"
-                  gradientUnits="userSpaceOnUse"
-                >
-                  <stop stop-color="#934EE7" />
-                  <stop offset="1" stop-color="#7270EC" />
-                </linearGradient>
-              </defs>
-            </svg>
-            +
-            <i class="fab fa-3x fa-vuejs" style="color: #3fb27f"></i>
-            +
-            <i class="fa fa-2x text-primary fa-circle-notch"></i>
+            <!-- Ersetze die Icons hier mit passenderen Icons für den PromptManager -->
+            <i class="fa fa-3x fa-brain" style="color: #7270ec"></i>
+            <i class="fa fa-3x fa-cogs" style="color: #934ee7"></i>
+            <i class="fa fa-3x fa-key" style="color: #3fb27f"></i>
           </div>
-          <h1 class="fw-black mt-3 mb-2">
-            Welcome to your brand new Laravel project!
-          </h1>
+          <h1 class="fw-black mt-3 mb-2">Willkommen bei AI Prompt Flow!</h1>
           <p class="fs-lg fw-medium text-muted mb-4">
-            It uses Laravel 12, Inertia.js, Vue.js and OneUI Vue Edition. It
-            comes packed with authentication features out of the box, so feel
-            free to
-            <Link href="/register">create an account</Link> and
-            <Link href="login">log in</Link> to your dashboard.
-            <Link href="login">log in</Link> to your dashboard.
-
+            Verwalte, versioniere und automatisiere deine AI Prompts und
+            Workflows. Erstelle einen Account oder logge dich ein, um
+            loszulegen.
           </p>
           <div class="d-flex justify-content-center gap-2">
-            <Link href="/preview" class="btn btn-lg btn-primary" v-click-ripple>
-              Preview all demo pages
-              <i class="fa fa-fw fa-arrow-right ms-1 opacity-50"></i>
+            <Link
+              :href="route('register')"
+              class="btn btn-lg btn-primary"
+              v-click-ripple
+            >
+              Account erstellen
+              <i class="fa fa-fw fa-user-plus ms-1 opacity-50"></i>
+            </Link>
+            <Link
+              :href="route('login')"
+              class="btn btn-lg btn-outline-primary"
+              v-click-ripple
+            >
+              Einloggen
+              <i class="fa fa-fw fa-sign-in-alt ms-1 opacity-50"></i>
             </Link>
           </div>
         </div>
@@ -68,109 +45,132 @@
   <!-- END Hero -->
 
   <!-- Features -->
-  <div id="one-vue-features" class="bg-body-light">
+  <div id="promptmanager-features" class="bg-body-light">
     <div class="content content-full">
       <div class="py-5">
         <div class="row mb-5">
           <div class="col-md-6">
             <h2 class="h1 fw-black mb-2">
-              Sophisticated
-              <span class="fw-normal">Features</span>
+              Mächtige
+              <span class="fw-normal">Funktionen</span>
             </h2>
             <p class="fs-lg fw-medium text-muted mb-0">
-              The Laravel version of OneUI Vue Edition comes packed with amazing
-              features out of the box.
+              AI Prompt Flow bietet dir alles, was du für effizientes Prompt-
+              und Workflow-Management benötigst.
             </p>
           </div>
           <div
             class="col-md-6 d-none d-md-flex align-items-md-center justify-content-md-end"
           >
-            <p class="h1 fw-bold text-body-bg-dark mb-0">Carefully Crafted.</p>
+            <p class="h1 fw-bold text-body-bg-dark mb-0">
+              Optimiert für Entwickler.
+            </p>
           </div>
         </div>
         <div class="row g-6">
-          <div class="col-sm-6">
-            <!-- Laravel 12 -->
+          <div class="col-sm-6 col-lg-4">
+            <!-- Prompts -->
             <div class="item item-rounded bg-body-extra-light my-4">
-              <i class="fab fa-2x fa-laravel" style="color: #f72c1f"></i>
+              <i class="fa fa-2x fa-pen-alt text-primary"></i>
             </div>
-            <h4 class="mb-2">Laravel 12</h4>
+            <h4 class="mb-2">Prompt Management</h4>
             <p class="text-muted mb-0">
-              The popular PHP framework, powers this application. It brings
-              enhanced performance, improved security features, and streamlined
-              development processes, ensuring your project is built on a robust
-              foundation.
+              Erstelle, versioniere und organisiere deine Prompts an einem
+              zentralen Ort. Nutze Variablen für maximale Flexibilität.
             </p>
-            <!-- END Laravel 12 -->
+            <!-- END Prompts -->
           </div>
-          <div class="col-sm-6">
-            <!-- Inertia.js -->
+          <div class="col-sm-6 col-lg-4">
+            <!-- Workflows -->
             <div class="item item-rounded bg-body-extra-light my-4">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 500 500"
-                class="d-inline-block"
-                style="width: 40px; height: 40px"
-              >
-                <rect width="500" height="500" fill="url(#a)" rx="250" />
-                <path fill="#fff" d="M184 165H95l86 86-86 86h89l86-86-86-86Z" />
-                <path
-                  fill="#fff"
-                  d="M318.5 165h-89l86 86-86 86h89l86-86-86-86Z"
-                />
-                <defs>
-                  <linearGradient
-                    id="a"
-                    x1="35"
-                    x2="632.5"
-                    y1="377.5"
-                    y2="65"
-                    gradientUnits="userSpaceOnUse"
-                  >
-                    <stop stop-color="#934EE7" />
-                    <stop offset="1" stop-color="#7270EC" />
-                  </linearGradient>
-                </defs>
-              </svg>
+              <i class="fa fa-2x fa-diagram-project text-warning"></i>
             </div>
-            <h4 class="mb-2">Inertia.js</h4>
+            <h4 class="mb-2">Workflow Automatisierung</h4>
             <p class="text-muted mb-0">
-              It seamlessly connects your Laravel backend with your Vue.js
-              frontend, allowing you to build modern single-page applications
-              without the complexity of a traditional SPA.
+              Verbinde Prompts, API-Aufrufe und Logik zu komplexen,
+              automatisierten Workflows, um anspruchsvolle KI-Aufgaben zu
+              bewältigen.
             </p>
-            <!-- END Inertia.js -->
+            <!-- END Workflows -->
           </div>
-          <div class="col-sm-6">
-            <!-- OneUI Vue Edition -->
+          <div class="col-sm-6 col-lg-4">
+            <!-- API Keys -->
             <div class="item item-rounded bg-body-extra-light my-4">
-              <i class="fa fa-2x fa-circle-notch text-primary"></i>
+              <i class="fa fa-2x fa-key text-info"></i>
             </div>
-            <h4 class="mb-2">OneUI Vue Edition</h4>
+            <h4 class="mb-2">API Key Verwaltung</h4>
             <p class="text-muted mb-0">
-              One super flexible UI framework for web developers and founders
-              who value their time. Built with Bootstrap 5 and Vue.js 3. It now
-              comes with a brand new dark mode.
+              Verbinde deine KI-Service-APIs wie OpenAI, Anthropic oder Google
+              sicher und einfach, um sie in deinen Prompts und Workflows zu
+              nutzen.
             </p>
-            <!-- END OneUI Vue Edition -->
+            <!-- END API Keys -->
           </div>
-          <div class="col-sm-6">
-            <!-- Authentication -->
+          <div class="col-sm-6 col-lg-4">
+            <!-- Versionierung -->
             <div class="item item-rounded bg-body-extra-light my-4">
-              <i class="fa fa-2x fa-lock text-danger"></i>
+              <i class="fa fa-2x fa-code-branch text-success"></i>
             </div>
-            <h4 class="mb-2">Authentication</h4>
+            <h4 class="mb-2">Versionierung</h4>
             <p class="text-muted mb-0">
-              Built-in authentication features based on Laravel Breeze starter
-              kit are integrated, including login, registration, password reset,
-              and email verification features.
+              Behalte den Überblick über Änderungen an deinen Prompts und
+              Workflows mit einer integrierten Versionierungsfunktion.
             </p>
-            <!-- END Authentication -->
+            <!-- END Versionierung -->
+          </div>
+          <div class="col-sm-6 col-lg-4">
+            <!-- Kollaboration -->
+            <div class="item item-rounded bg-body-extra-light my-4">
+              <i class="fa fa-2x fa-users text-danger"></i>
+            </div>
+            <h4 class="mb-2">Team Kollaboration</h4>
+            <p class="text-muted mb-0">
+              Arbeite im Team an Prompts und Workflows und teile deine besten
+              Kreationen (Feature in Entwicklung).
+            </p>
+            <!-- END Kollaboration -->
+          </div>
+          <div class="col-sm-6 col-lg-4">
+            <!-- Ausführungs-Log -->
+            <div class="item item-rounded bg-body-extra-light my-4">
+              <i class="fa fa-2x fa-history text-indigo"></i>
+            </div>
+            <h4 class="mb-2">Ausführungs-Log</h4>
+            <p class="text-muted mb-0">
+              Verfolge die Ausführung deiner Workflows und analysiere die
+              Ergebnisse, um deine Prozesse kontinuierlich zu verbessern.
+            </p>
+            <!-- END Ausführungs-Log -->
           </div>
         </div>
       </div>
     </div>
   </div>
   <!-- END Features -->
+
+  <!-- Call to action -->
+  <div class="bg-body-extra-light">
+    <div class="content content-full text-center">
+      <div class="py-5">
+        <h2 class="h1 fw-black mb-2">Bereit loszulegen?</h2>
+        <p class="fs-lg fw-medium text-muted mb-4">
+          Erstelle jetzt deinen kostenlosen Account und entdecke die
+          Möglichkeiten von AI Prompt Flow.
+        </p>
+        <Link
+          :href="route('register')"
+          class="btn btn-lg btn-primary"
+          v-click-ripple
+        >
+          Jetzt registrieren
+          <i class="fa fa-fw fa-arrow-right ms-1 opacity-50"></i>
+        </Link>
+        <p class="mt-3 mb-0">
+          Schon einen Account?
+          <Link :href="route('login')">Hier einloggen</Link>.
+        </p>
+      </div>
+    </div>
+  </div>
+  <!-- END Call to action -->
 </template>
