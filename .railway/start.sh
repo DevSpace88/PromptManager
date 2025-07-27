@@ -2,8 +2,9 @@
 # .railway/start.sh
 
 # Warte darauf, dass der Datenbank-Host auf dem Port erreichbar ist.
+# Wir verwenden eine eingebaute Bash-Funktion anstelle von `nc`.
 echo "Waiting for database to be ready..."
-timeout 30 bash -c 'until nc -z $DB_HOST $DB_PORT; do sleep 1; done'
+timeout 30 bash -c 'until (</dev/tcp/$DB_HOST/$DB_PORT) &>/dev/null; do sleep 1; done'
 if [ $? -ne 0 ]; then
   echo "Database did not become available in time. Exiting."
   exit 1
