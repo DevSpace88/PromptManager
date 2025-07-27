@@ -10,7 +10,10 @@ setup = { pkgs = [
     "php82Extensions.bcmath",# Oft von Laravel benötigt
     "nodejs_18",
     "composer",
-    "nginx"
+    "nginx",
+    "procps",
+    "netcat",
+    "sudo"
 ]}
 
 # In der 'install'-Phase installieren wir die Abhängigkeiten des Projekts

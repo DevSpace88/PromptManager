@@ -1,8 +1,16 @@
 #!/bin/bash
 # .railway/start.sh
 
-# Warten, bis die Datenbank erreichbar ist (optional, aber gute Praxis)
-# Führe Migrationen aus. Das --force Flag ist wichtig in der Produktion.
+# Warte darauf, dass der Datenbank-Host auf dem Port erreichbar ist.
+echo "Waiting for database to be ready..."
+timeout 30 bash -c 'until nc -z $DB_HOST $DB_PORT; do sleep 1; done'
+if [ $? -ne 0 ]; then
+  echo "Database did not become available in time. Exiting."
+  exit 1
+fi
+echo "Database is ready."
+
+# Führe Migrationen aus.
 echo "Running migrations..."
 php artisan migrate --force
 
@@ -14,12 +22,13 @@ php artisan view:cache
 
 # Konfigurationsdatei für Nginx kopieren
 echo "Configuring Nginx..."
-cp ./.railway/nginx.conf /etc/nginx/nginx.conf
+sudo mkdir -p /etc/nginx/
+sudo cp ./.railway/nginx.conf /etc/nginx/nginx.conf
 
 # PHP-FPM im Hintergrund starten
 echo "Starting PHP-FPM..."
-/usr/sbin/php-fpm8.2 -D
+sudo $(which php-fpm) -D
 
 # Nginx im Vordergrund starten (damit der Container nicht beendet wird)
 echo "Starting Nginx..."
-nginx -g "daemon off;"
+sudo nginx -g "daemon off;"
