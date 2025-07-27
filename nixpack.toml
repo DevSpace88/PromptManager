@@ -1,0 +1,31 @@
+# nixpacks.toml
+
+# Definiert die Phasen des Build-Prozesses
+[phases]
+# In der 'setup'-Phase installieren wir alle nötigen Pakete
+setup = { pkgs = [
+    "php82",
+    "php82Extensions.mysql", # oder pgsql für PostgreSQL
+    "php82Extensions.gd",    # Oft für Bildbearbeitung benötigt
+    "php82Extensions.bcmath",# Oft von Laravel benötigt
+    "nodejs_18",
+    "composer",
+    "nginx"
+]}
+
+# In der 'install'-Phase installieren wir die Abhängigkeiten des Projekts
+install = { cmds = [
+    "composer install --optimize-autoloader --no-dev",
+    "npm install"
+]}
+
+# In der 'build'-Phase kompilieren wir die Assets und bereiten Laravel vor
+build = { cmds = [
+    "npm run build", # oder "npm run prod" je nach deinem setup
+    "php artisan key:generate --force", # --force ist wichtig für non-interactive Umgebungen
+    "php artisan storage:link"
+]}
+
+# Definiert den Befehl zum Starten der Anwendung
+[start]
+cmd = "./.railway/start.sh"
