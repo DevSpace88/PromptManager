@@ -15,7 +15,6 @@ setup = { pkgs = [
     "composer",
     "nginx",
     "procps",
-    "netcat",                   # Für Datenbank-Checks
     "findutils",                # Für find-Befehle
     "coreutils"                 # Für mkdir, chmod etc.
 ]}

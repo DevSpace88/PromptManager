@@ -11,25 +11,6 @@ mkdir -p /tmp/nginx
 mkdir -p /tmp/php
 mkdir -p /tmp/logs
 
-# Prüfe auf Datenbank-Verfügbarkeit nur wenn DB konfiguriert
-if [ ! -z "$DATABASE_URL" ] || [ ! -z "$DB_HOST" ]; then
-    echo "Waiting for database to be ready..."
-    
-    # Extrahiere DB-Details aus DATABASE_URL falls verfügbar
-    if [ ! -z "$DATABASE_URL" ]; then
-        # PostgreSQL URL Format: postgresql://user:password@host:port/database
-        DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\([^:]*\):.*/\1/p')
-        DB_PORT=$(echo $DATABASE_URL | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
-    fi
-    
-    # Fallback-Port für PostgreSQL
-    DB_PORT=${DB_PORT:-5432}
-    
-    if [ ! -z "$DB_HOST" ]; then
-        timeout 30 bash -c "until nc -z $DB_HOST $DB_PORT; do echo 'Waiting for DB...'; sleep 2; done" || echo "Database check timed out, continuing..."
-    fi
-fi
-
 echo "Setting up Laravel..."
 
 # Laravel-Optimierungen
@@ -37,10 +18,20 @@ php artisan config:clear
 php artisan route:clear
 php artisan view:clear
 
-# Nur Migrationen ausführen wenn Datenbank verfügbar
+# Versuche Datenbank-Verbindung mit Laravel selbst zu testen
 if [ ! -z "$DATABASE_URL" ] || [ ! -z "$DB_HOST" ]; then
-    echo "Running migrations..."
-    php artisan migrate --force || echo "Migration failed, continuing..."
+    echo "Testing database connection..."
+    
+    # Verwende Laravel's eigenen Database Check
+    if php artisan migrate:status &>/dev/null; then
+        echo "Database connection successful. Running migrations..."
+        php artisan migrate --force
+    else
+        echo "Database not yet available or not configured. Skipping migrations..."
+        echo "App will try to connect when needed."
+    fi
+else
+    echo "No database configured. Skipping database operations..."
 fi
 
 # Cache-Befehle
