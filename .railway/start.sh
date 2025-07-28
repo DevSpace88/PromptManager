@@ -43,18 +43,23 @@ php artisan view:cache
 
 echo "Configuring services..."
 
+# Finde den aktuellen User
+CURRENT_USER=$(whoami)
+echo "Running as user: $CURRENT_USER"
+
 # PHP-FPM Konfiguration anpassen für Railway
-cat > /tmp/php-fpm.conf << 'EOF'
+cat > /tmp/php-fpm.conf << EOF
 [global]
 pid = /tmp/php/php-fpm.pid
 error_log = /tmp/logs/php-fpm.log
+daemonize = no
 
 [www]
-user = nobody
-group = nobody
+user = $CURRENT_USER
+group = $CURRENT_USER
 listen = /tmp/php/php8.2-fpm.sock
-listen.owner = nobody
-listen.group = nobody
+listen.owner = $CURRENT_USER
+listen.group = $CURRENT_USER
 listen.mode = 0660
 
 pm = dynamic
@@ -64,6 +69,26 @@ pm.min_spare_servers = 1
 pm.max_spare_servers = 5
 
 catch_workers_output = yes
+EOF
+
+# Erstelle eine minimalistische mime.types Datei
+cat > /tmp/mime.types << 'EOF'
+types {
+    text/html                             html htm shtml;
+    text/css                              css;
+    text/xml                              xml;
+    image/gif                             gif;
+    image/jpeg                            jpeg jpg;
+    image/png                             png;
+    image/svg+xml                         svg svgz;
+    image/webp                            webp;
+    application/javascript                js;
+    application/json                      json;
+    application/pdf                       pdf;
+    application/zip                       zip;
+    font/woff                             woff;
+    font/woff2                            woff2;
+}
 EOF
 
 # Nginx Konfiguration anpassen für Railway
@@ -79,7 +104,7 @@ events {
 }
 
 http {
-    include /etc/nginx/mime.types;
+    include /tmp/mime.types;
     default_type application/octet-stream;
     
     access_log /tmp/logs/nginx_access.log;
@@ -128,13 +153,27 @@ http {
 }
 EOF
 
-# Starte PHP-FPM
+# Erstelle notwendige Temp-Verzeichnisse für Nginx
+mkdir -p /tmp/nginx/client_body
+mkdir -p /tmp/nginx/proxy  
+mkdir -p /tmp/nginx/fastcgi
+
+# Starte PHP-FPM im Hintergrund
 echo "Starting PHP-FPM..."
-php-fpm -y /tmp/php-fpm.conf -D
+php-fpm -y /tmp/php-fpm.conf &
+PHP_FPM_PID=$!
 
 # Warte kurz, damit PHP-FPM startet
-sleep 2
+sleep 3
+
+# Prüfe ob PHP-FPM läuft
+if ! kill -0 $PHP_FPM_PID 2>/dev/null; then
+    echo "ERROR: PHP-FPM failed to start!"
+    exit 1
+fi
+
+echo "PHP-FPM started successfully (PID: $PHP_FPM_PID)"
 
 # Starte Nginx im Vordergrund
 echo "Starting Nginx on port $PORT..."
-nginx -c /tmp/nginx.conf -g "daemon off;"
+exec nginx -c /tmp/nginx.conf -g "daemon off;"
