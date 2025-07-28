@@ -47,19 +47,19 @@ echo "Configuring services..."
 CURRENT_USER=$(whoami)
 echo "Running as user: $CURRENT_USER"
 
-# PHP-FPM Konfiguration anpassen für Railway
-cat > /tmp/php-fpm.conf << EOF
+# PHP-FPM Konfiguration - erlaubt root in Container-Umgebung
+cat > /tmp/php-fpm.conf << 'EOF'
 [global]
 pid = /tmp/php/php-fpm.pid
 error_log = /tmp/logs/php-fpm.log
 daemonize = no
 
 [www]
-user = $CURRENT_USER
-group = $CURRENT_USER
+user = root
+group = root
 listen = /tmp/php/php8.2-fpm.sock
-listen.owner = $CURRENT_USER
-listen.group = $CURRENT_USER
+listen.owner = root
+listen.group = root
 listen.mode = 0660
 
 pm = dynamic
@@ -158,9 +158,9 @@ mkdir -p /tmp/nginx/client_body
 mkdir -p /tmp/nginx/proxy  
 mkdir -p /tmp/nginx/fastcgi
 
-# Starte PHP-FPM im Hintergrund
-echo "Starting PHP-FPM..."
-php-fpm -y /tmp/php-fpm.conf &
+# Starte PHP-FPM im Hintergrund mit --allow-to-run-as-root Flag
+echo "Starting PHP-FPM as root (container environment)..."
+php-fpm -y /tmp/php-fpm.conf --allow-to-run-as-root &
 PHP_FPM_PID=$!
 
 # Warte kurz, damit PHP-FPM startet
@@ -169,11 +169,25 @@ sleep 3
 # Prüfe ob PHP-FPM läuft
 if ! kill -0 $PHP_FPM_PID 2>/dev/null; then
     echo "ERROR: PHP-FPM failed to start!"
+    cat /tmp/logs/php-fpm.log 2>/dev/null || echo "No PHP-FPM log available"
     exit 1
 fi
 
 echo "PHP-FPM started successfully (PID: $PHP_FPM_PID)"
 
+# Funktion für graceful shutdown
+cleanup() {
+    echo "Shutting down services..."
+    kill $PHP_FPM_PID 2>/dev/null
+    exit 0
+}
+
+# Signal Handler für graceful shutdown
+trap cleanup SIGTERM SIGINT
+
 # Starte Nginx im Vordergrund
 echo "Starting Nginx on port $PORT..."
+echo "Application should be available at: http://localhost:$PORT"
+
+# Verwende exec um sicherzustellen, dass Nginx PID 1 wird
 exec nginx -c /tmp/nginx.conf -g "daemon off;"
