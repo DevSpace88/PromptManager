@@ -7,8 +7,8 @@ set -e
 # Build assets using NPM
 npm run build
 
-# Clear cache
-php artisan optimize:clear
+# Clear cache using file driver to avoid DB connection issues during build
+CACHE_DRIVER=file php artisan optimize:clear
 
 # Cache the various components of the Laravel application
 php artisan config:cache
