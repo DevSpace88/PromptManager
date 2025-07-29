@@ -5,18 +5,18 @@
 setup = { pkgs = [
     "php82",
     "php82Extensions.mysql",
-    "php82Extensions.pgsql",    # PostgreSQL-Unterstützung
+    "php82Extensions.pgsql",
     "php82Extensions.gd",
     "php82Extensions.bcmath",
-    "php82Extensions.zip",      # Für Composer
-    "php82Extensions.curl",     # Für HTTP-Requests
-    "php82Extensions.mbstring", # Für String-Handling
+    "php82Extensions.zip",
+    "php82Extensions.curl",
+    "php82Extensions.mbstring",
     "nodejs_18",
     "composer",
     "nginx",
     "procps",
-    "findutils",                # Für find-Befehle
-    "coreutils"                 # Für mkdir, chmod etc.
+    "findutils",
+    "coreutils"
 ]}
 
 # Install-Phase: Installiere Dependencies
@@ -25,17 +25,6 @@ install = { cmds = [
     "npm ci --only=production --silent"
 ]}
 
-# Build-Phase: Kompiliere Assets und bereite Laravel vor
-build = { cmds = [
-    "npm run build",
-    "php artisan storage:link --force || true"
-]}
-
-# Start-Phase: Cache die Konfiguration und starte die Server
-[start]
-cmd = "php artisan config:cache && php artisan route:cache && php artisan view:cache && /usr/bin/php-fpm -D && /usr/sbin/nginx -g 'daemon off;'"
-
-# Umgebungsvariablen
 [variables]
 NODE_ENV = "production"
 APP_ENV = "production"
