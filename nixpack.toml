@@ -35,10 +35,6 @@ build = { cmds = [
     "php artisan view:clear"
 ]}
 
-# Start-Befehl
-[start]
-cmd = "./.railway/start.sh"
-
 # Umgebungsvariablen
 [variables]
 NODE_ENV = "production"
