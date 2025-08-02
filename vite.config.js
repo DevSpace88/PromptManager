@@ -43,6 +43,7 @@ import vue from "@vitejs/plugin-vue";
 import path from "path";
 
 export default defineConfig({
+  base: '/',
   plugins: [
     laravel({
       input: ["resources/js/app.js"],
@@ -65,31 +66,34 @@ export default defineConfig({
   resolve: {
     alias: {
       "@scss": path.resolve(__dirname, "./resources/scss"),
-      "@": path.resolve(__dirname, "./resources/js") // Add this line
+      "@": path.resolve(__dirname, "./resources/js")
     }
   },
   build: {
-    chunkSizeWarningLimit: 1000, // Increase from default 500kb to 1000kb
+    chunkSizeWarningLimit: 1500, // Increase to 1500kb
     rollupOptions: {
       output: {
         manualChunks: {
           'vendor': [
             'vue',
-            'vue-router',
             '@inertiajs/vue3',
             'axios'
           ],
-          'editor': [
-            'codemirror',
-            '@codemirror/lang-javascript',
-            '@codemirror/lang-markdown',
-            '@codemirror/theme-one-dark'
+          'ui-components': [
+            'bootstrap',
+            '@popperjs/core',
+            'sweetalert2',
+            'nprogress'
           ],
           'flow': [
             '@vue-flow/core',
             '@vue-flow/background',
             '@vue-flow/controls',
             '@vue-flow/minimap'
+          ],
+          'charts': [
+            'chart.js',
+            'vue-chartjs'
           ]
         }
       }
