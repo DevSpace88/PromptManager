@@ -57,14 +57,41 @@ class AppServiceProvider extends ServiceProvider
                                 return parent::createConnection($driver, $connection, $database, $prefix, $config);
                             } catch (\Exception $e) {
                                 if (strpos($e->getMessage(), 'Connection refused') !== false) {
-                                    // Log the error
-                                    \Illuminate\Support\Facades\Log::error("Database connection refused. Retrying in 3 seconds...");
+                                    // Maximum number of retries
+                                    $maxRetries = 5;
+                                    $retryCount = 0;
+                                    $waitTime = 5; // Initial wait time in seconds
 
-                                    // Wait before retrying
-                                    sleep(3);
+                                    while ($retryCount < $maxRetries) {
+                                        // Log the error with retry information
+                                        \Illuminate\Support\Facades\Log::error("Database connection refused. Retry {$retryCount}/{$maxRetries} in {$waitTime} seconds...");
 
-                                    // Try again
-                                    return parent::createConnection($driver, $connection, $database, $prefix, $config);
+                                        // Wait before retrying
+                                        sleep($waitTime);
+
+                                        // Increase wait time for next retry (exponential backoff)
+                                        $waitTime = min($waitTime * 2, 30);
+                                        $retryCount++;
+
+                                        try {
+                                            // Try again
+                                            return parent::createConnection($driver, $connection, $database, $prefix, $config);
+                                        } catch (\Exception $innerException) {
+                                            // If it's not a connection refused error, throw it immediately
+                                            if (strpos($innerException->getMessage(), 'Connection refused') === false) {
+                                                throw $innerException;
+                                            }
+
+                                            // If it's the last retry, throw the exception
+                                            if ($retryCount >= $maxRetries) {
+                                                \Illuminate\Support\Facades\Log::error("Maximum retries reached. Database connection failed.");
+                                                throw $innerException;
+                                            }
+
+                                            // Otherwise, continue the retry loop
+                                            continue;
+                                        }
+                                    }
                                 }
 
                                 throw $e;
