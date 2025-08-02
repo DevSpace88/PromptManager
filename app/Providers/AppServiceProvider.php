@@ -18,20 +18,7 @@ class AppServiceProvider extends ServiceProvider
             $url = parse_url($databaseUrl);
 
             if (isset($url['scheme']) && $url['scheme'] === 'mysql') {
-                // Get existing options from config
-                $existingOptions = config('database.connections.mysql.options', []);
-
-                // Merge with our enhanced options for Railway
-                $options = array_merge($existingOptions, [
-                    \PDO::ATTR_TIMEOUT => 60,
-                    \PDO::ATTR_PERSISTENT => true,
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-                    \PDO::ATTR_EMULATE_PREPARES => false,
-                    // Add initialization command for MySQL
-                    \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET wait_timeout=300',
-                ]);
-
-                // Configure database connection with enhanced settings
+                // Configure database connection for Railway
                 config([
                     'database.default' => 'mysql',
                     'database.connections.mysql.host' => $url['host'] ?? '127.0.0.1',
@@ -39,66 +26,12 @@ class AppServiceProvider extends ServiceProvider
                     'database.connections.mysql.database' => ltrim($url['path'] ?? '', '/'),
                     'database.connections.mysql.username' => $url['user'] ?? '',
                     'database.connections.mysql.password' => $url['pass'] ?? '',
-                    'database.connections.mysql.options' => $options,
+                    'database.connections.mysql.charset' => 'utf8mb4',
+                    'database.connections.mysql.collation' => 'utf8mb4_unicode_ci',
+                    'database.connections.mysql.prefix' => '',
+                    'database.connections.mysql.strict' => true,
+                    'database.connections.mysql.engine' => null,
                 ]);
-
-                // Register a database connection event listener for connection issues
-                \Illuminate\Support\Facades\Event::listen('Illuminate\Database\Events\QueryExecuted', function ($event) {
-                    // This event listener will be triggered for each query
-                    // We don't need to do anything here, but it ensures the database connection is established
-                });
-
-                // Add a custom exception handler for database connection issues
-                $this->app->singleton('db.connection.factory', function ($app) {
-                    return new class($app) extends \Illuminate\Database\Connectors\ConnectionFactory {
-                        protected function createConnection($driver, $connection, $database, $prefix = '', array $config = [])
-                        {
-                            try {
-                                return parent::createConnection($driver, $connection, $database, $prefix, $config);
-                            } catch (\Exception $e) {
-                                if (strpos($e->getMessage(), 'Connection refused') !== false) {
-                                    // Maximum number of retries
-                                    $maxRetries = 5;
-                                    $retryCount = 0;
-                                    $waitTime = 5; // Initial wait time in seconds
-
-                                    while ($retryCount < $maxRetries) {
-                                        // Log the error with retry information
-                                        \Illuminate\Support\Facades\Log::error("Database connection refused. Retry {$retryCount}/{$maxRetries} in {$waitTime} seconds...");
-
-                                        // Wait before retrying
-                                        sleep($waitTime);
-
-                                        // Increase wait time for next retry (exponential backoff)
-                                        $waitTime = min($waitTime * 2, 30);
-                                        $retryCount++;
-
-                                        try {
-                                            // Try again
-                                            return parent::createConnection($driver, $connection, $database, $prefix, $config);
-                                        } catch (\Exception $innerException) {
-                                            // If it's not a connection refused error, throw it immediately
-                                            if (strpos($innerException->getMessage(), 'Connection refused') === false) {
-                                                throw $innerException;
-                                            }
-
-                                            // If it's the last retry, throw the exception
-                                            if ($retryCount >= $maxRetries) {
-                                                \Illuminate\Support\Facades\Log::error("Maximum retries reached. Database connection failed.");
-                                                throw $innerException;
-                                            }
-
-                                            // Otherwise, continue the retry loop
-                                            continue;
-                                        }
-                                    }
-                                }
-
-                                throw $e;
-                            }
-                        }
-                    };
-                });
             }
         }
     }
