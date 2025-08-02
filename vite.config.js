@@ -68,4 +68,31 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./resources/js") // Add this line
     }
   },
+  build: {
+    chunkSizeWarningLimit: 1000, // Increase from default 500kb to 1000kb
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor': [
+            'vue',
+            'vue-router',
+            '@inertiajs/vue3',
+            'axios'
+          ],
+          'editor': [
+            'codemirror',
+            '@codemirror/lang-javascript',
+            '@codemirror/lang-markdown',
+            '@codemirror/theme-one-dark'
+          ],
+          'flow': [
+            '@vue-flow/core',
+            '@vue-flow/background',
+            '@vue-flow/controls',
+            '@vue-flow/minimap'
+          ]
+        }
+      }
+    }
+  },
 });
