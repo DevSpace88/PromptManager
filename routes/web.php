@@ -89,6 +89,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
 });
 
+Route::get('/health', function () {
+    return response()->json(['status' => 'ok', 'port' => $_ENV['PORT'] ?? 'not set']);
+});
+
 // Catch-all route for SPA
 //Route::get('/{any}', function () {
 //    return Inertia::render('NotFound');
