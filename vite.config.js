@@ -53,6 +53,7 @@ export default defineConfig({
         "routes/**",
         "resources/markdown/**",
       ],
+      buildDirectory: 'build',
     }),
     vue({
       template: {
