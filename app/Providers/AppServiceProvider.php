@@ -41,15 +41,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Vite::prefetch(concurrency: 3);
+//        Vite::prefetch(concurrency: 3);
 
-        // HTTPS für Production erzwingen
-        if ($this->app->environment('production') || config('app.force_https')) {
+        if($this->app->isProduction()){
             URL::forceScheme('https');
-
-            // Proxy-Headers für Railway vertrauen
-            request()->server->set('HTTPS', 'on');
-            request()->server->set('SERVER_PORT', 443);
         }
+
+//        // HTTPS für Production erzwingen
+//        if ($this->app->environment('production') || config('app.force_https')) {
+//            URL::forceScheme('https');
+//
+//            // Proxy-Headers für Railway vertrauen
+//            request()->server->set('HTTPS', 'on');
+//            request()->server->set('SERVER_PORT', 443);
+//        }
     }
 }
