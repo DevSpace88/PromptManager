@@ -18,7 +18,7 @@
     <!-- Ziggy Routen-Daten -->
     @routes
 
-  @vite(["resources/js/app.js", "resources/js/views/{$page["component"]}.vue"])
+  @vite(["resources/js/app.js"])
     @inertiaHead
 </head>
 

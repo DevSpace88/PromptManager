@@ -68,7 +68,7 @@ $space-main-max-width: 1920px !default; // Main content max width
 
 // Third Party
 
-// Nutze Pfade relativ zur SCSS-Datei, damit Vite die Assets in Production korrekt auflöst
-$inter-font-path: "../../fonts/inter/" !default;
-$fa-font-path: "../webfonts" !default; // Font Awesome Standardpfad relativ zu deren SCSS
-$simple-line-font-path: "../../fonts/simple-line-icons/" !default;
+// Stabil: direkt aus `public/assets/...` referenzieren (keine Vite-Rewrites nötig)
+$inter-font-path: "/assets/fonts/inter/" !default;
+$fa-font-path: "/assets/webfonts" !default;
+$simple-line-font-path: "/assets/fonts/simple-line-icons/" !default;

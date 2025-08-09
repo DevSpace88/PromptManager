@@ -4,7 +4,8 @@
   "scripts": {
     "start": "concurrently \"php artisan serve\" \"npm run dev\"",
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && npm run postbuild:assets",
+    "postbuild:assets": "mkdir -p public/assets/fonts/inter public/assets/fonts/simple-line-icons public/assets/webfonts && cp -R resources/fonts/inter/* public/assets/fonts/inter/ && cp -R resources/fonts/simple-line-icons/* public/assets/fonts/simple-line-icons/ && cp -R node_modules/@fortawesome/fontawesome-free/webfonts/* public/assets/webfonts/",
     "update": "npm update --save && composer update && composer bump",
     "format": "prettier --write \"./resources/js/**/*.{vue,js,scss,json}\""
   },
