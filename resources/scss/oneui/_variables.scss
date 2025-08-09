@@ -68,6 +68,7 @@ $space-main-max-width: 1920px !default; // Main content max width
 
 // Third Party
 
-$inter-font-path: "@/../fonts/inter/" !default;
-$fa-font-path: "@fortawesome/fontawesome-free/webfonts" !default;
-$simple-line-font-path: "@/../fonts/simple-line-icons/" !default;
+// Nutze Pfade relativ zur SCSS-Datei, damit Vite die Assets in Production korrekt auflöst
+$inter-font-path: "../../fonts/inter/" !default;
+$fa-font-path: "../webfonts" !default; // Font Awesome Standardpfad relativ zu deren SCSS
+$simple-line-font-path: "../../fonts/simple-line-icons/" !default;
