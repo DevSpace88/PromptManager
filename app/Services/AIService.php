@@ -6,6 +6,7 @@ use App\Models\ApiKey;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Support\NamespacedCache;
 
 class AIService
 {
@@ -43,20 +44,29 @@ class AIService
      */
     protected function getApiKey(string $provider)
     {
-        // First try to get the default key for this provider
-        $apiKey = ApiKey::where('user_id', Auth::id())
-            ->where('provider', $provider)
-            ->where('is_default', true)
-            ->first();
+        $userId = (int) Auth::id();
+        return NamespacedCache::rememberUser(
+            'api_keys',
+            $userId,
+            "provider_{$provider}_effective",
+            600,
+            function () use ($provider, $userId) {
+                // First try to get the default key for this provider
+                $apiKey = ApiKey::where('user_id', $userId)
+                    ->where('provider', $provider)
+                    ->where('is_default', true)
+                    ->first();
 
-        // If no default key, get any key for this provider
-        if (!$apiKey) {
-            $apiKey = ApiKey::where('user_id', Auth::id())
-                ->where('provider', $provider)
-                ->first();
-        }
+                // If no default key, get any key for this provider
+                if (!$apiKey) {
+                    $apiKey = ApiKey::where('user_id', $userId)
+                        ->where('provider', $provider)
+                        ->first();
+                }
 
-        return $apiKey ? $apiKey->key : null;
+                return $apiKey ? $apiKey->key : null;
+            }
+        );
     }
 
     /**

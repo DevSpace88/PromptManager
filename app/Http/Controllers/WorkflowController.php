@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use App\Support\NamespacedCache;
 
 class WorkflowController extends Controller
 {
@@ -34,15 +35,27 @@ class WorkflowController extends Controller
 
     public function index()
     {
-        $workflows = Workflow::where('user_id', Auth::id())
-            ->orderBy('updated_at', 'desc')
-            ->get();
+        $workflows = NamespacedCache::rememberUser(
+            'workflows',
+            (int) Auth::id(),
+            'list_all',
+            60,
+            fn () => Workflow::where('user_id', Auth::id())
+                ->orderBy('updated_at', 'desc')
+                ->get()
+        );
 
-        $recentExecutions = ExecutionLog::with('workflow')
-            ->where('user_id', Auth::id())
-            ->latest()
-            ->take(5)
-            ->get();
+        $recentExecutions = NamespacedCache::rememberUser(
+            'executions',
+            (int) Auth::id(),
+            'workflows_index_recent_5',
+            60,
+            fn () => ExecutionLog::with('workflow')
+                ->where('user_id', Auth::id())
+                ->latest()
+                ->take(5)
+                ->get()
+        );
 
         return Inertia::render('Pages/Workflows/Index', [
             'workflows' => $workflows,
@@ -58,16 +71,24 @@ class WorkflowController extends Controller
     public function create()
     {
         // Lade alle Prompts für diesen Benutzer
-        $prompts = Prompt::with('currentVersion')
-            ->where('user_id', Auth::id())
-            ->get()
-            ->map(function ($prompt) {
-                return [
-                    'id' => $prompt->id,
-                    'name' => $prompt->title,
-                    'content' => $prompt->currentVersion ? $prompt->currentVersion->content : ''
-                ];
-            });
+        $prompts = NamespacedCache::rememberUser(
+            'prompts',
+            (int) Auth::id(),
+            'for_workflow_create',
+            300,
+            function () {
+                return Prompt::with('currentVersion')
+                    ->where('user_id', Auth::id())
+                    ->get()
+                    ->map(function ($prompt) {
+                        return [
+                            'id' => $prompt->id,
+                            'name' => $prompt->title,
+                            'content' => $prompt->currentVersion ? $prompt->currentVersion->content : ''
+                        ];
+                    });
+            }
+        );
 
         return Inertia::render('Pages/Workflows/Create', [
             'prompts' => $prompts
@@ -104,10 +125,16 @@ class WorkflowController extends Controller
             abort(403);
         }
 
-        $recentExecutions = $workflow->executionLogs()
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
+        $recentExecutions = NamespacedCache::rememberUser(
+            'executions',
+            (int) Auth::id(),
+            "workflow_{$workflow->id}_recent_5",
+            60,
+            fn () => $workflow->executionLogs()
+                ->orderBy('created_at', 'desc')
+                ->take(5)
+                ->get()
+        );
 
         return Inertia::render('Pages/Workflows/Show', [
             'workflow' => $workflow,

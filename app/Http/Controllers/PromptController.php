@@ -7,15 +7,22 @@ use App\Models\PromptVersion;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use App\Support\NamespacedCache;
 
 class PromptController extends Controller
 {
     public function index()
     {
-        $prompts = Prompt::with('currentVersion')
-            ->where('user_id', Auth::id())
-            ->orderBy('updated_at', 'desc')
-            ->get();
+        $prompts = NamespacedCache::rememberUser(
+            'prompts',
+            (int) Auth::id(),
+            'list_all',
+            60,
+            fn () => Prompt::with('currentVersion')
+                ->where('user_id', Auth::id())
+                ->orderBy('updated_at', 'desc')
+                ->get()
+        );
 
         return Inertia::render('Pages/Prompts/Index', [
             'prompts' => $prompts
@@ -65,7 +72,7 @@ class PromptController extends Controller
             'versions' => function ($query) {
                 $query->orderBy('version', 'desc');
             },
-            'currentVersion' // currentVersion-Beziehung laden
+            'currentVersion'
         ]);
 
         return Inertia::render('Pages/Prompts/Show', [

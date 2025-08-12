@@ -5,6 +5,8 @@ namespace App\Providers;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
+use App\Models\{Prompt, PromptVersion, Workflow, ApiKey, ExecutionLog};
+use App\Observers\{PromptObserver, PromptVersionObserver, WorkflowObserver, ApiKeyObserver, ExecutionLogObserver};
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -46,6 +48,13 @@ class AppServiceProvider extends ServiceProvider
         if($this->app->isProduction()){
             URL::forceScheme('https');
         }
+
+        // Model Observers für Cache-Invalidierung registrieren
+        Prompt::observe(PromptObserver::class);
+        PromptVersion::observe(PromptVersionObserver::class);
+        Workflow::observe(WorkflowObserver::class);
+        ApiKey::observe(ApiKeyObserver::class);
+        ExecutionLog::observe(ExecutionLogObserver::class);
 
 //        // HTTPS für Production erzwingen
 //        if ($this->app->environment('production') || config('app.force_https')) {
