@@ -7,6 +7,7 @@ use App\Services\AiService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use App\Support\NamespacedCache;
 
 class PlaygroundController extends Controller
 {
@@ -19,10 +20,16 @@ class PlaygroundController extends Controller
 
     public function index()
     {
-        $prompts = Prompt::with('currentVersion')
-            ->where('user_id', Auth::id())
-            ->orderBy('title')
-            ->get();
+        $prompts = NamespacedCache::rememberUser(
+            'prompts',
+            (int) Auth::id(),
+            'for_playground_index',
+            300,
+            fn () => Prompt::with('currentVersion')
+                ->where('user_id', Auth::id())
+                ->orderBy('title')
+                ->get()
+        );
 
         return Inertia::render('Pages/Playground/Index', [
             'prompts' => $prompts,

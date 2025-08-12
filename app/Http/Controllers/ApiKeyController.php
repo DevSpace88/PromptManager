@@ -6,14 +6,21 @@ use App\Models\ApiKey;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use App\Support\NamespacedCache;
 
 class ApiKeyController extends Controller
 {
     public function index()
     {
-        $apiKeys = ApiKey::where('user_id', Auth::id())
-            ->orderBy('provider')
-            ->get();
+        $apiKeys = NamespacedCache::rememberUser(
+            'api_keys',
+            (int) Auth::id(),
+            'list_all',
+            300,
+            fn () => ApiKey::where('user_id', Auth::id())
+                ->orderBy('provider')
+                ->get()
+        );
 
         // Don't expose the full key, but provide a masked version
         $apiKeys->transform(function ($apiKey) {
