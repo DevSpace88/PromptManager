@@ -1993,13 +1993,32 @@ const submit = () => {
   }
 };
 
-// Update nodes and edges from editor component
+// Update nodes and edges from editor component (sanitize transient fields)
 const updateNodes = (nodes) => {
-  form.nodes = nodes;
+  const sanitized = nodes.map((n) => {
+    const data = { ...(n.data || {}) };
+    if (data.prompts) delete data.prompts;
+    if (data.apiKeys) delete data.apiKeys;
+    return {
+      id: n.id,
+      type: n.type?.replace(/Node$/, '') || (data.type || ''),
+      position: n.position || { x: 0, y: 0 },
+      data,
+    };
+  });
+  form.nodes = sanitized;
 };
 
 const updateEdges = (edges) => {
-  form.edges = edges;
+  const sanitized = (edges || []).map((e) => ({
+    id: e.id,
+    source: e.source,
+    target: e.target,
+    sourceHandle: e.sourceHandle || null,
+    targetHandle: e.targetHandle || null,
+    data: e.data || {},
+  }));
+  form.edges = sanitized;
 };
 
 // Cancel editing and return to workflow list

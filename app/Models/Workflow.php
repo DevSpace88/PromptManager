@@ -31,6 +31,18 @@ class Workflow extends Model
         'is_active' => 'boolean',
     ];
 
+    protected static function booted(): void
+    {
+        static::saving(function (self $workflow) {
+            // Ensure arrays are arrays; avoid null casting surprises
+            $workflow->nodes = is_array($workflow->nodes) ? array_values($workflow->nodes) : [];
+            $workflow->edges = is_array($workflow->edges) ? array_values($workflow->edges) : [];
+            if ($workflow->settings === null) {
+                $workflow->settings = [];
+            }
+        });
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

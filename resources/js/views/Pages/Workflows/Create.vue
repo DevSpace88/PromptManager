@@ -2303,9 +2303,21 @@ const submit = () => {
   }
 };
 
-// Update nodes and edges from editor component
+// Update nodes and edges from editor component (sanitize transient fields)
 const updateNodes = (nodes) => {
-  form.nodes = nodes;
+  const sanitized = nodes.map((n) => {
+    const data = { ...(n.data || {}) };
+    // Remove heavy, UI-only fields
+    if (data.prompts) delete data.prompts;
+    if (data.apiKeys) delete data.apiKeys;
+    return {
+      id: n.id,
+      type: n.type?.replace(/Node$/, '') || (data.type || ''),
+      position: n.position || { x: 0, y: 0 },
+      data,
+    };
+  });
+  form.nodes = sanitized;
 };
 
 const updateEdges = (edges) => {

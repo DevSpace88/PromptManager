@@ -97,11 +97,12 @@ class WorkflowController extends Controller
 
     public function store(Request $request)
     {
+        // Cache invalidation: bevor wir speichern, spätere Flushes in Observer
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'nodes' => 'required|array',
-            'edges' => 'required|array',
+            'edges' => 'array',
             'settings' => 'nullable|array',
         ]);
 
@@ -109,11 +110,14 @@ class WorkflowController extends Controller
             'user_id' => Auth::id(),
             'name' => $request->name,
             'description' => $request->description,
-            'nodes' => $request->nodes,
-            'edges' => $request->edges,
+            'nodes' => $request->nodes ?? [],
+            'edges' => $request->edges ?? [],
             'settings' => $request->settings,
             'is_active' => true,
         ]);
+
+        // Flush Workflow-Listen Cache für den Nutzer
+        NamespacedCache::flushUserGroup('workflows', (int) Auth::id());
 
         return redirect()->route('workflows.show', $workflow)
             ->with('success', 'Workflow created successfully.');
@@ -177,7 +181,7 @@ class WorkflowController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'nodes' => 'required|array',
-            'edges' => 'required|array',
+            'edges' => 'array',
             'settings' => 'nullable|array',
             'is_active' => 'boolean',
         ]);
@@ -185,11 +189,14 @@ class WorkflowController extends Controller
         $workflow->update([
             'name' => $request->name,
             'description' => $request->description,
-            'nodes' => $request->nodes,
-            'edges' => $request->edges,
-            'settings' => $request->settings,
+            'nodes' => $request->nodes ?? $workflow->nodes,
+            'edges' => $request->edges ?? $workflow->edges,
+            'settings' => $request->settings ?? $workflow->settings,
             'is_active' => $request->is_active ?? $workflow->is_active,
         ]);
+
+        // Flush Workflow-Listen Cache für den Nutzer
+        NamespacedCache::flushUserGroup('workflows', (int) Auth::id());
 
         return redirect()->route('workflows.show', $workflow)
             ->with('success', 'Workflow updated successfully.');
@@ -202,6 +209,7 @@ class WorkflowController extends Controller
         }
 
         $workflow->delete();
+        NamespacedCache::flushUserGroup('workflows', (int) Auth::id());
 
         return redirect()->route('workflows.index')
             ->with('success', 'Workflow deleted successfully.');
