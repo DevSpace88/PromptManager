@@ -45,7 +45,15 @@ const submit = () => {
               Willkommen bei deiner App. Logge dich ein, um auf dein Dashboard
               zuzugreifen.
             </p>
+            <div class="text-white">
+              <div>
+                <p class="my-0 p-0"><strong>Test-Login:</strong></p>
+                <p class="my-0 p-0">Benutzername: <code>admin</code></p>
+                <p class="my-0 p-0">Passwort: <code>admin123</code></p>
+              </div>
+            </div>
           </div>
+
         </div>
         <div
           class="p-4 p-xl-5 d-xl-flex justify-content-between align-items-center fs-sm"
