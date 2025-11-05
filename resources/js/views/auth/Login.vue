@@ -48,7 +48,7 @@ const submit = () => {
             <div class="text-white">
               <div>
                 <p class="my-0 p-0"><strong>Test-Login:</strong></p>
-                <p class="my-0 p-0">Benutzername: <code>admin</code></p>
+                <p class="my-0 p-0">Email: <code>admin@google.de</code></p>
                 <p class="my-0 p-0">Passwort: <code>admin123</code></p>
               </div>
             </div>
